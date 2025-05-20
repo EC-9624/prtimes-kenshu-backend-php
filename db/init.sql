@@ -25,11 +25,11 @@ CREATE TABLE "tags" (
   "created_at" datetime NOT NULL DEFAULT (now())
 );
 
-CREATE TABLE "post_tags" (
-  "post_id" uuid,
-  "tag_id" int,
-  "created_at" datetime NOT NULL DEFAULT (now()),
-  "primary" key(post_id,tag_id)
+CREATE TABLE post_tags (
+  post_id uuid,
+  tag_id int,
+  created_at timestamp NOT NULL DEFAULT (now()),
+  PRIMARY KEY (post_id, tag_id)
 );
 
 CREATE TABLE "images" (
