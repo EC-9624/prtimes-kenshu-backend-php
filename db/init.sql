@@ -1,7 +1,7 @@
 CREATE TABLE "users" (
   "user_id" uuid PRIMARY KEY,
   "user_name" varchar(255) UNIQUE NOT NULL,
-  "email" varchar(255),
+  "email" varchar(255) UNIQUE,
   "password" varchar(255) NOT NULL,
   "created_at" timestamp NOT NULL DEFAULT (now())
   "updated_at" timestamp DEFAULT NULL
