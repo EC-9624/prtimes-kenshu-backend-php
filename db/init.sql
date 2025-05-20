@@ -45,8 +45,19 @@ COMMENT ON COLUMN "post_tags"."primary" IS 'composite primary key';
 
 -- foreign keys
 ALTER TABLE "posts" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id");
+ALTER TABLE "posts" ADD FOREIGN KEY ("thumbnail_image_id") REFERENCES "images" ("image_id");
 ALTER TABLE "post_tags" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id");
 ALTER TABLE "post_tags" ADD FOREIGN KEY ("tag_id") REFERENCES "tags" ("tag_id");
 ALTER TABLE "images" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id");
 
 -- indexes
+
+-- Index on the foreign key in the posts table
+CREATE INDEX idx_posts_user_id ON posts (user_id);
+CREATE INDEX idx_posts_thumbnail_image_id ON posts (thumbnail_image_id);
+
+-- Index on the foreign key in the post_tags table (for queries filtering only by tag_id)
+CREATE INDEX idx_post_tags_tag_id ON post_tags (tag_id);
+
+-- Index on the foreign key in the images table
+CREATE INDEX idx_images_post_id ON images (post_id);
