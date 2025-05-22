@@ -19,7 +19,7 @@ services:
     ports:
       - 3000:80
     volumes:
-      - ./src:/var/www/html:ro
+      - ./:/var/www/html:ro
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - php-fpm
@@ -28,10 +28,10 @@ services:
   php-fpm:
     container_name: kenshu_php-fpm
     build:
-      context: ./php-fpm
+      context: .
       dockerfile: Dockerfile
     volumes:
-      - ./src:/var/www/html # Mount your PHP application
+      - ./:/var/www/html # Mount your PHP application
       - ./php-fpm/php.ini:/usr/local/etc/php/conf.d/custom.ini
     environment:
       DATABASE_HOST: ${DATABASE_HOST}

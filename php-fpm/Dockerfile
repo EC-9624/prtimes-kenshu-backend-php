@@ -5,8 +5,15 @@ RUN apk add --no-cache \
     libpq \
     && docker-php-ext-install pdo_pgsql pgsql pdo_mysql
 
-COPY php.ini /usr/local/etc/php/conf.d/custom.ini
-
 WORKDIR /var/www/html
 
 COPY --from=composer/composer:latest /usr/bin/composer /usr/bin/composer
+
+COPY composer.json composer.lock ./
+
+RUN composer install --no-interaction --no-ansi --no-progress \
+    && composer dump-autoload --optimize
+
+COPY . /var/www/html
+
+COPY php-fpm/php.ini /usr/local/etc/php/conf.d/custom.ini
