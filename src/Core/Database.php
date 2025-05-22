@@ -13,10 +13,6 @@ class Database
     protected $user;
     protected $password;
 
-
-
-
-
     public function __construct()
     {
         $this->host = getenv('DATABASE_HOST');
