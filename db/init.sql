@@ -3,7 +3,7 @@ CREATE TABLE "users" (
   "user_name" varchar(255) UNIQUE NOT NULL,
   "email" varchar(255) UNIQUE,
   "password" varchar(255) NOT NULL,
-  "created_at" timestamp NOT NULL DEFAULT (now())
+  "created_at" timestamp NOT NULL DEFAULT (now()),
   "updated_at" timestamp DEFAULT NULL
 );
 
@@ -42,7 +42,6 @@ CREATE TABLE "images" (
 
 COMMENT ON COLUMN "users"."password" IS 'hashed value';
 COMMENT ON COLUMN "posts"."deleted_at" IS 'soft delete';
-COMMENT ON COLUMN "post_tags"."primary" IS 'composite primary key';
 
 -- foreign keys
 ALTER TABLE "posts" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id");
