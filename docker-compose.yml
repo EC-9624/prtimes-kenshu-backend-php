@@ -29,9 +29,9 @@ services:
     container_name: kenshu_php-fpm
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./php-fpm/Dockerfile
     volumes:
-      - ./:/var/www/html # Mount your PHP application
+      - ./:/var/www/html
       - ./php-fpm/php.ini:/usr/local/etc/php/conf.d/custom.ini
     environment:
       DATABASE_HOST: ${DATABASE_HOST}
