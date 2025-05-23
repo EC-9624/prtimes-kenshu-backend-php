@@ -8,6 +8,6 @@ class HomeController
 {
     public function index()
     {
-        render('index', ['title' => 'Home Page']);
+        render('home/index', ['title' => 'Home Page']);
     }
 }
