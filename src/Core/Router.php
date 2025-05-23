@@ -54,9 +54,23 @@ class Router
 
     public function dispatch()
     {
-        $routes = $this->routes[$this->method] ?? [];
+        $methodToMatch = ($this->method === 'HEAD') ? 'GET' : $this->method;
+        $routes = $this->routes[$methodToMatch] ?? [];
+
+        if ($methodToMatch == 'OPTIONS') {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+            return;
+        }
+
         foreach ($routes as $path => $action) {
             if ($this->match($path, $params)) {
+                if ($this->method === 'HEAD') {
+                    ob_start(); // Start capturing output
+                    $this->runAction($action, $params);
+                    ob_end_clean(); // Discard everything captured
+                    return;
+                }
                 return $this->runAction($action, $params);
             }
         }
