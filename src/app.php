@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Controllers\AuthController;
 use App\Core\Database;
 use App\Core\Router;
 use App\Controllers\HomeController;
@@ -22,6 +23,10 @@ class App
         $this->db->getConnection();
 
         $this->router->get('/', [HomeController::class, 'index']);
+        $this->router->get('/login', [AuthController::class, 'index']);
+        $this->router->get('/register', [AuthController::class, 'showRegister']);
+
+
 
         $this->router->dispatch();
     }

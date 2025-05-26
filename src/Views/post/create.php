@@ -1,14 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Post</title>
-</head>
-
-<body>
-    <h1>Create Post</h1>
-</body>
-
-</html>
+<?php require(VIEW_PATH . 'partials/head.php') ?>
+<h1 class="text-4xl font-bold">this is a create post page</h1>
+<?php require(VIEW_PATH . 'partials/footer.php') ?>

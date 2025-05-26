@@ -1,7 +1,8 @@
 <?php
+define('VIEW_PATH', __DIR__ . '/../Views/');
 
 function render(string $template, array $data = []): void
 {
     extract($data);
-    require __DIR__ . '/../Views/' . $template . '.php';
+    require VIEW_PATH . $template . '.php';
 }
