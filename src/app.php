@@ -7,7 +7,7 @@ use App\Core\Database;
 use App\Core\Router;
 use App\Controllers\HomeController;
 
-class App
+class app
 {
     protected Router $router;
     protected Database $db;
@@ -24,8 +24,8 @@ class App
 
         $this->router->get('/', [HomeController::class, 'index']);
         //auth
-        $this->router->get('/login', [AuthController::class, 'index']);
-        $this->router->get('/register', [AuthController::class, 'showRegister']);
+        $this->router->get('/login', [AuthController::class, 'showLoginForm']);
+        $this->router->get('/register', [AuthController::class, 'showRegisterFrom']);
         //users
 
         //posts

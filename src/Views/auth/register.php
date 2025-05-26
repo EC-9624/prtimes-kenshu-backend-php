@@ -1,10 +1,11 @@
 <?php require(VIEW_PATH . 'partials/head.php') ?>
 <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
-    <a href="/">
-        <img class="mx-auto h-10 w-auto" src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company">
-    </a>
-    <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">Create an account</h2>
-
+    <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+        <a href="/">
+            <img class="mx-auto h-10 w-auto" src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company">
+        </a>
+        <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">Create an account</h2>
+    </div>
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form class="space-y-6" action="#" method="POST">
             <div>

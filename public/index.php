@@ -2,7 +2,7 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use App\App;
+use App\app;
 
-$app = new App();
+$app = new app();
 $app->run();
