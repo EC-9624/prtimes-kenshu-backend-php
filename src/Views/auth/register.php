@@ -1,4 +1,5 @@
 <?php require(VIEW_PATH . 'partials/head.php') ?>
+
 <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
         <a href="/">
@@ -7,38 +8,70 @@
         <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">Create an account</h2>
     </div>
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form class="space-y-6" action="#" method="POST">
+        <form class="space-y-6" action="/register" method="POST">
+            <?php if (!empty($errors)): ?>
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <strong class="font-bold">Oops!</strong>
+                    <span class="block sm:inline">Please correct the following issues:</span>
+                    <ul class="mt-2 list-disc list-inside">
+                        <?php foreach ($errors as $error): ?>
+                            <li><?= htmlspecialchars($error) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
             <div>
                 <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
                 <div class="mt-2">
-                    <input type="email" name="email" id="email" autocomplete="email" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                    <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        autocomplete="email"
+                        value="<?= htmlspecialchars($old['email'] ?? '') ?>"
+                        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
                 </div>
             </div>
 
             <div>
-                <label for="email" class="block text-sm/6 font-medium text-gray-900">Username</label>
+                <label for="user_name" class="block text-sm/6 font-medium text-gray-900">Username</label>
                 <div class="mt-2">
-                    <input type="text" name="username" id="username" autocomplete="name" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                    <input
+                        type="text"
+                        name="user_name"
+                        id="user_name"
+                        autocomplete="name"
+
+                        value="<?= htmlspecialchars($old['userName'] ?? '') ?>"
+                        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 fous:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
                 </div>
             </div>
 
             <div>
                 <div class="flex items-center justify-between">
                     <label for="password" class="block text-sm/6 font-medium text-gray-900">Password</label>
-
                 </div>
                 <div class="mt-2">
-                    <input type="password" name="password" id="password" autocomplete="new-password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        autocomplete="new-password"
+                        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
                 </div>
             </div>
 
             <div>
                 <div class="flex items-center justify-between">
-                    <label for="password" class="block text-sm/6 font-medium text-gray-900">Confirm Password</label>
-
+                    <label for="confirm_password" class="block text-sm/6 font-medium text-gray-900">Confirm Password</label>
                 </div>
                 <div class="mt-2">
-                    <input type="password" name="password" id="password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                    <input
+                        type="password"
+                        name="confirm_password"
+                        id="confirm_password"
+                        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
                 </div>
             </div>
 
