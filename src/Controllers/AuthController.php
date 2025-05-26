@@ -5,7 +5,6 @@ namespace App\Controllers;
 require_once __DIR__ . '/../core/helper.php';
 
 use App\Core\Database;
-use App\Models\User;
 use App\Repositories\UserRepository;
 use Exception;
 
@@ -49,7 +48,6 @@ class AuthController
             $errors['password'] = 'Passwords do not match.';
         }
 
-        var_dump($errors);
 
         if (!empty($errors)) {
             render('auth/register', [
