@@ -9,7 +9,6 @@ use App\Repositories\UserRepository;
 use Exception;
 use PDOException;
 
-
 class AuthController
 {
     public function showLoginForm()
