@@ -25,6 +25,8 @@ class app
         $this->router->get('/', [HomeController::class, 'index']);
         //auth
         $this->router->get('/login', [AuthController::class, 'showLoginForm']);
+        $this->router->post('/login', [AuthController::class, 'login']);
+        $this->router->get('/logout', [AuthController::class, 'logout']);
         $this->router->get('/register', [AuthController::class, 'showRegisterForm']);
         $this->router->post('/register', [AuthController::class, 'register']);
         //users

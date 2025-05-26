@@ -18,9 +18,9 @@ class UserRepository implements UserRepositoryInterface
         $this->pdo = $database->getConnection();
     }
 
-    public function find(UuidInterface $userId): ?User
+    public function findById(UuidInterface $userId): ?User
     {
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE user_id = ?");
+        $stmt = $this->pdo->prepare("SELECT user_id, user_name, email FROM users WHERE user_id = ?");
         $stmt->execute([$userId->toString()]);
         $row = $stmt->fetch();
 
@@ -31,6 +31,22 @@ class UserRepository implements UserRepositoryInterface
             $row['user_name'],
             $row['email']
         );
+    }
+
+    public function findByEmail(string $email): ?array
+    {
+
+        $stmt = $this->pdo->prepare("SELECT user_id, user_name, email, password FROM users WHERE email = ? LIMIT 1");
+        $stmt->execute([$email]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return null;
+        }
+
+        // Return the full row, including the hashed password
+        // The password verification will happen in the controller, NOT the repository
+        return $row;
     }
 
     public function create($userName, $email, $password): User
