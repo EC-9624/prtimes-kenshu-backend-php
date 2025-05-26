@@ -23,8 +23,12 @@ class App
         $this->db->getConnection();
 
         $this->router->get('/', [HomeController::class, 'index']);
+        //auth
         $this->router->get('/login', [AuthController::class, 'index']);
         $this->router->get('/register', [AuthController::class, 'showRegister']);
+        //users
+
+        //posts
 
 
 
