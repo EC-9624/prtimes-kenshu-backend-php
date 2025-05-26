@@ -27,8 +27,8 @@ class AuthController
 
         $userName = trim($body['user_name'] ?? '');
         $email = trim($body['email'] ?? '');
-        $password = $body['password'] ?? '';
-        $confirmPassword = $body['confirm_password'] ?? '';
+        $password = trim($body['password'] ?? '');
+        $confirmPassword = trim($body['confirm_password'] ?? '');
 
         $errors = [];
 
@@ -49,7 +49,6 @@ class AuthController
         if ($password !== $confirmPassword) {
             $errors['password'] = 'Passwords do not match.';
         }
-
 
         if (!empty($errors)) {
             render('auth/register', [
@@ -84,8 +83,8 @@ class AuthController
 
     public function login(array $body = [])
     {
-        $email = $body['email'];
-        $password = $body['password'];
+        $email = trim($body['email']);
+        $password = trim($body['password']);
         $errors = [];
 
         if (empty($email)) {
@@ -111,11 +110,11 @@ class AuthController
             $user = $userRepo->findByEmail($body['email']);
 
             if (!$user) {
-                $errors['credentials'] = 'Invalid credentials.'; // Use a specific key for clarity
+                $errors['credentials'] = 'Invalid credentials.';
                 render('auth/login', [
                     'title' => 'Login Page',
                     'errors' => $errors,
-                    'old' => compact('email') // Keep old email here too
+                    'old' => compact('email')
                 ]);
                 return;
             }
@@ -129,10 +128,9 @@ class AuthController
                 ]);
                 return;
             }
-
             // Authentication Successful!
 
-            // session_start() is now handled globally in the front controller.
+            // session_start() is now handled globally.
             // Only regenerate the ID here for security.
             session_regenerate_id(true);
 
@@ -146,7 +144,7 @@ class AuthController
             error_log("PDO Error during login: " . $e->getMessage());
             render('auth/login', [
                 'title' => 'Login Page',
-                'errors' => ['general' => 'Login failed due to a database error. Please try again.'], // Use a generic error message for users
+                'errors' => "PDO Error during login: " . $e->getMessage(),
                 'old' => compact('email')
             ]);
         }
@@ -154,7 +152,6 @@ class AuthController
 
     public function logout()
     {
-
         session_unset();
         session_destroy();
 
