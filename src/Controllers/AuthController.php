@@ -31,7 +31,7 @@ class AuthController
 
         $errors = [];
 
-        if ($userName === '') {
+        if ($userName === '' || $password === null) {
             $errors['user_name'] = 'User name is required.';
         }
 
@@ -39,7 +39,7 @@ class AuthController
             $errors['email'] = 'Valid email is required.';
         }
 
-        if ($password === '') {
+        if ($password === '' || $password === null) {
             $errors['password'] = 'Password is required.';
         } elseif (strlen($password) < 8) {
             $errors['password'] = 'Password must be at least 8 characters long.';
@@ -86,11 +86,11 @@ class AuthController
         $password = trim($body['password']);
         $errors = [];
 
-        if (empty($email)) {
+        if ($email === '' || $email === null) {
             $errors['email'] = ' Email is required.';
         }
 
-        if (empty($password)) {
+        if ($password === "" || $password === null) {
             $errors['password'] = 'Password is required.';
         }
 
