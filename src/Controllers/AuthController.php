@@ -108,7 +108,7 @@ class AuthController
         try {
             $user = $userRepo->findByEmail($email);
 
-            if (!$user) {
+            if ($user === null) {
                 $errors['credentials'] = 'Invalid credentials.';
                 render('auth/login', [
                     'title' => 'Login Page',

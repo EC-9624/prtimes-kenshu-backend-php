@@ -43,16 +43,16 @@ class UserRepository implements UserRepositoryInterface
         $stmt->execute([$email]);
         $row = $stmt->fetch();
 
-        if (count($row) <= 0) {
-            return null;
-        }
-
-        return new User(
+        $user = new User(
             Uuid::fromString($row['user_id']),
             $row['user_name'],
             $row['email'],
             $row['password']
         );
+
+        return count($row) > 0
+            ?
+            $user : null;
     }
 
     public function create($userName, $email, $password): User

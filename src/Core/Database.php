@@ -38,7 +38,7 @@ class Database
                 $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             } catch (PDOException $e) {
                 error_log("Database connection error: " . $e->getMessage());
-                die("Database connection failed. Please try again later.");
+                throw new PDOException("Database connection failed", 0, $e);
             }
         }
         return $this->pdo;
