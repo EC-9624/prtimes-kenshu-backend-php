@@ -24,10 +24,10 @@ class AuthController
     public function register(array $body = [])
     {
 
-        $userName = trim($body['user_name'] ?? '');
-        $email = trim($body['email'] ?? '');
-        $password = trim($body['password'] ?? '');
-        $confirmPassword = trim($body['confirm_password'] ?? '');
+        $userName = trim($body['user_name']);
+        $email = trim($body['email']);
+        $password = trim($body['password']);
+        $confirmPassword = trim($body['confirm_password']);
 
         $errors = [];
 
