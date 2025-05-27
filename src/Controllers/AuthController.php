@@ -31,7 +31,7 @@ class AuthController
 
         $errors = [];
 
-        if (empty($userName)) {
+        if ($userName === '') {
             $errors['user_name'] = 'User name is required.';
         }
 
@@ -39,7 +39,7 @@ class AuthController
             $errors['email'] = 'Valid email is required.';
         }
 
-        if (empty($password)) {
+        if ($password === '') {
             $errors['password'] = 'Password is required.';
         } elseif (strlen($password) < 8) {
             $errors['password'] = 'Password must be at least 8 characters long.';
@@ -106,7 +106,7 @@ class AuthController
         $database = new Database();
         $userRepo = new UserRepository($database);
         try {
-            $user = $userRepo->findByEmail($body['email']);
+            $user = $userRepo->findByEmail($email);
 
             if (!$user) {
                 $errors['credentials'] = 'Invalid credentials.';
@@ -118,7 +118,7 @@ class AuthController
                 return;
             }
 
-            if (!password_verify($password, $user['password'])) {
+            if (!password_verify($password, $user->getPassword() ?? '')) {
                 $errors['credentials'] = 'Invalid credentials.';
                 render('auth/login', [
                     'title' => 'Login Page',
@@ -133,9 +133,9 @@ class AuthController
             // Only regenerate the ID here for security.
             session_regenerate_id(true);
 
-            $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['user_name'] = $user['user_name'];
-            $_SESSION['email'] = $user['email'];
+            $_SESSION['user_id'] = $user->getUserId()->toString();
+            $_SESSION['user_name'] = $user->getUserName();
+            $_SESSION['email'] = $user->getEmail();
 
             header('Location: /');
             exit;

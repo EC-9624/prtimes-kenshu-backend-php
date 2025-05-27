@@ -10,7 +10,7 @@
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form class="space-y-6" action="/login" method="POST">
-            <?php if (!empty($errors)): ?>
+            <?php if (isset($errors)): ?>
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
                     <strong class="font-bold">Oops!</strong>
                     <span class="block sm:inline">Please correct the following issues:</span>
