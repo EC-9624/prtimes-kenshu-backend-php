@@ -24,15 +24,16 @@ class UserRepository implements UserRepositoryInterface
         $stmt->execute([$userId->toString()]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $user =  new User(
-            Uuid::fromString($row['user_id']),
-            $row['user_name'],
-            $row['email']
-        );
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return count($row) > 0
-            ?
-            $user : null;
+        return $row
+            ? new User(
+                Uuid::fromString($row['user_id']),
+                $row['user_name'],
+                $row['email'],
+                $row['password']
+            )
+            : null;
     }
 
 
@@ -43,16 +44,15 @@ class UserRepository implements UserRepositoryInterface
         $stmt->execute([$email]);
         $row = $stmt->fetch();
 
-        $user = new User(
-            Uuid::fromString($row['user_id']),
-            $row['user_name'],
-            $row['email'],
-            $row['password']
-        );
 
-        return count($row) > 0
-            ?
-            $user : null;
+        return $row
+            ? new User(
+                Uuid::fromString($row['user_id']),
+                $row['user_name'],
+                $row['email'],
+                $row['password']
+            )
+            : null;
     }
 
     public function create($userName, $email, $password): User

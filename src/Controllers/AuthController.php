@@ -156,7 +156,7 @@ class AuthController
 
             header('Location: /');
             exit;
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             error_log("PDO Error during login: " . $e->getMessage());
             render('auth/login', [
                 'title' => 'Login Page',
