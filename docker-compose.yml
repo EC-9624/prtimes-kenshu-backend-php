@@ -43,9 +43,19 @@ services:
       - db
     networks:
       - kenshu_app
+  valkey:
+    image: valkey/valkey:latest
+    container_name: kenshu_valkey
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey_data:/data
+    networks:
+      - kenshu_app
 
 volumes:
   postgres_data:
+  valkey_data:
 
 networks:
   kenshu_app:
