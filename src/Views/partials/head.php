@@ -9,7 +9,10 @@
 </head>
 
 <body>
-    <header class="bg-gray-100 px-6 py-4 shadow-md">
+    <header class="flex justify-between bg-gray-100 px-6 py-4 shadow-md">
+        <a href="/">
+            <img class="mx-auto h-10 w-auto" src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company">
+        </a>
         <div class="flex items-center justify-end gap-4">
             <?php if (isset($_SESSION['user_name'], $_SESSION['email'])): ?>
                 <div class="flex items-center space-x-4">
