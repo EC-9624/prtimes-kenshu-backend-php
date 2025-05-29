@@ -4,14 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="/js/tailwindcss.js"></script>
+
     <title><?= htmlspecialchars($title) ?></title>
 </head>
 
 <body>
     <header class="flex justify-between bg-gray-100 px-6 py-4 shadow-md">
         <a href="/">
-            <img class="mx-auto h-10 w-auto" src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600" alt="Your Company">
+            <img class="mx-auto h-10 w-auto" src="/img/mark.svg" alt="Your Company">
         </a>
         <div class="flex items-center justify-end gap-4">
             <?php if (isset($_SESSION['user_name'], $_SESSION['email'])): ?>
