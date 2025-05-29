@@ -9,6 +9,5 @@ class HomeController
     public function index()
     {
         render('home/index', ['title' => 'Home Page']);
-        var_dump($_SESSION);
     }
 }

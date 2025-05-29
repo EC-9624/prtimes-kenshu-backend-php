@@ -11,6 +11,7 @@ CREATE TABLE "posts" (
   "post_id" uuid PRIMARY KEY,
   "user_id" uuid,
   "title" varchar(255) NOT NULL,
+  "slug" varchar(255) UNIQUE NOT NULL,
   "text" text NOT NULL,
   "thumbnail_image_id" uuid,
   "created_at" timestamp NOT NULL DEFAULT (now()),
