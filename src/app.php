@@ -33,7 +33,12 @@ class app
         //users
 
         //posts
-        $this->router->get('/posts/{slug}', [PostConstroller::class, 'show']);
+        $this->router->get('/posts/{post_slug}', [PostConstroller::class, 'showPost']);
+        $this->router->get('/create-post', [PostConstroller::class, 'showCreatePost']);
+        $this->router->post('/create-post', [PostConstroller::class, 'createPost']);
+        $this->router->get('/posts/{post_id}/edit', [PostConstroller::class, 'showEditpost']);
+        $this->router->patch('/posts/{post_id}/edit', [PostConstroller::class, 'editPost']);
+        $this->router->delete('/posts/{post_id}/delete', [PostConstroller::class, 'deletePost']);
 
         $this->router->get('/info', function () {
             phpinfo();
