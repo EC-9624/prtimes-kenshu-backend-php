@@ -6,6 +6,7 @@ use App\Controllers\AuthController;
 use App\Core\Database;
 use App\Core\Router;
 use App\Controllers\HomeController;
+use App\Controllers\PostConstroller;
 
 class app
 {
@@ -32,6 +33,7 @@ class app
         //users
 
         //posts
+        $this->router->get('/posts/{slug}', [PostConstroller::class, 'show']);
 
         $this->router->get('/info', function () {
             phpinfo();
