@@ -59,7 +59,7 @@ class AuthController
             $errors['password'] = 'Passwords do not match.';
         }
 
-        if (count($errors)) {
+        if (count($errors) > 0) {
             render('auth/register', [
                 'title' => 'Register Page',
                 'errors' => $errors,
@@ -111,7 +111,7 @@ class AuthController
             $errors['password'] = 'Password is required.';
         }
 
-        if (count($errors)) {
+        if (count($errors) > 0) {
             render('auth/login', [
                 'title' => 'Login Page',
                 'errors' => $errors,
