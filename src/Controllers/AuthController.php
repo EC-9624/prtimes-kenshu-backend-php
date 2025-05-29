@@ -11,6 +11,7 @@ use PDOException;
 
 class AuthController
 {
+
     public function showLoginForm()
     {
         render('auth/login', ['title' => 'Login Page']);
@@ -21,9 +22,18 @@ class AuthController
         render('auth/register', ['title' => 'Register Page']);
     }
 
+    /**
+     * Handles user registration.
+     *
+     * Validates user input, checks for errors, and if all is valid,
+     * stores the new user into the database.
+     *
+     * @param array $body Associative array of form data (e.g. POST body).
+     * Expected keys: 'user_name', 'email', 'password', 'confirm_password'
+     * @return void
+     */
     public function register(array $body = [])
     {
-
         $userName = trim($body['user_name']);
         $email = trim($body['email']);
         $password = trim($body['password']);
@@ -80,6 +90,13 @@ class AuthController
         }
     }
 
+    /**
+     * Handles user login.
+     *
+     * @param array $body An associative array containing the request body data, typically from a POST request.
+     * Expected keys: 'email', 'password'.
+     * @return void
+     */
     public function login(array $body = [])
     {
         $email = trim($body['email']);
@@ -149,6 +166,13 @@ class AuthController
         }
     }
 
+    /**
+     * Handles user logout.
+     *
+     * Destroys the session and redirects the user to the login page.
+     *
+     * @return void
+     */
     public function logout()
     {
         session_unset();
