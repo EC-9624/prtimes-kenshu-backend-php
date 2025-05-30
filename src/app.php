@@ -22,8 +22,9 @@ class app
     public function run()
     {
         $this->db->getConnection();
-
+        //top
         $this->router->get('/', [HomeController::class, 'index']);
+        //categories
         //auth
         $this->router->get('/login', [AuthController::class, 'showLoginForm']);
         $this->router->post('/login', [AuthController::class, 'login']);

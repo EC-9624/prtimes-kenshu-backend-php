@@ -7,7 +7,6 @@ require_once __DIR__ . '/../core/helper.php';
 use App\Core\Database;
 use App\Repositories\UserRepository;
 use Exception;
-use PDOException;
 
 class AuthController
 {
