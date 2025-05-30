@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <header class="flex justify-between bg-gray-100 px-6 py-4 shadow-md">
+    <header class="flex justify-between bg-gray-100 px-10 py-4 shadow-md">
         <a href="/">
             <img class="mx-auto h-10 w-auto" src="/img/mark.svg" alt="Your Company">
         </a>

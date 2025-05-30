@@ -21,12 +21,11 @@ class HomeController
 
     public function showCategory($category)
     {
-        var_dump($category);
         $database = new Database();
         $postRepo = new PostRepository($database);
-        $posts = $postRepo->getAllPosts($category);
+        $posts = $postRepo->getPostsByTag($category);
 
 
-        render('home/index', ['title' => 'Home Page', 'data' => $posts]);
+        render('home/index', ['title' => $category . ' Page', 'data' => $posts]);
     }
 }
