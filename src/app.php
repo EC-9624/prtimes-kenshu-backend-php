@@ -25,6 +25,7 @@ class app
         //top
         $this->router->get('/', [HomeController::class, 'index']);
         //categories
+        $this->router->get('/{category_slug}', [HomeController::class, 'showCategory']);
         //auth
         $this->router->get('/login', [AuthController::class, 'showLoginForm']);
         $this->router->post('/login', [AuthController::class, 'login']);

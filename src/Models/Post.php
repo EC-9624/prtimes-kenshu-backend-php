@@ -10,6 +10,7 @@ class Post
 {
     public UuidInterface $post_id;
     public UuidInterface $user_id;
+    public string $user_name;
     public string $title;
     public string $slug;
     public string $text;
@@ -20,6 +21,7 @@ class Post
     public function __construct(
         UuidInterface $post_id,
         UuidInterface $user_id,
+        string $user_name,
         string $slug,
         string $title,
         string $text,
@@ -29,6 +31,7 @@ class Post
     ) {
         $this->post_id = $post_id;
         $this->user_id = $user_id;
+        $this->user_name = $user_name;
         $this->slug = $slug;
         $this->title = $title;
         $this->text = $text;
@@ -46,6 +49,11 @@ class Post
     public function getUserId(): UuidInterface
     {
         return $this->user_id;
+    }
+
+    public function getUserName(): String
+    {
+        return $this->user_name;
     }
 
     public function getTitle(): string
@@ -86,6 +94,7 @@ class Post
      * @param array{
      *     post_id: string,
      *     author_id: string,
+     *     author: string,
      *     slug: string,
      *     title: string,
      *     image_path: ?string,
@@ -101,6 +110,7 @@ class Post
         return new self(
             Uuid::fromString($data['post_id']),
             Uuid::fromString($data['author_id']),
+            $data['author'], // user_name mapped from 'author'
             $data['slug'],
             $data['title'],
             '', // Text is not needed in list view

@@ -53,7 +53,7 @@ class PostRepository implements PostRepositoryInterface
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll();
 
 
         if (count($rows) <= 0) {
@@ -66,6 +66,7 @@ class PostRepository implements PostRepositoryInterface
         }
         return $posts;
     }
+
     // public function findById(UuidInterface $postId): ?Post {}
     // public function create(): Post {}
 }
