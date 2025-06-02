@@ -70,10 +70,7 @@ class HomeController
             ]);
         } catch (Exception $e) {
             error_log("Unexpected error in HomeController::index(): " . $e->getMessage());
-            render('home/index', [
-                'title' => 'Home Page',
-            ]);
-            var_dump($e);
+            throw new Exception("Unexpected error in HomeController::index():", 0, $e);
         }
     }
 
@@ -130,10 +127,7 @@ class HomeController
             ]);
         } catch (Exception $e) {
             error_log("Unexpected error in HomeController::showCategory(): " . $e->getMessage());
-            render('home/index', [
-                'title' => 'Home Page',
-            ]);
-            var_dump($e);
+            throw new Exception("Unexpected error in HomeController::showCategory():", 0, $e);
         }
     }
 }
