@@ -66,13 +66,13 @@ class PostConstroller
         render('post/create', ['title' => 'Create Post Page']);
     }
     //POST /create-post
-    public function createPost()
+    public function createPost($body)
     {
+        var_dump($body);
         //will be call from create showCreatePost page 
         //get user info from session
-        // think about File upload
-        // maybe create File upload handler?
-        echo 'storePost called';
+        // $this->postRepo->create();
+        echo 'create called';
     }
     //GET /posts/post_slug/edit
     public function showEditpost() {}

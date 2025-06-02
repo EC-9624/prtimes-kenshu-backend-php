@@ -3,7 +3,7 @@
 namespace App\Repositories\Interfaces;
 
 use App\Models\Post;
-use Ramsey\Uuid\UuidInterface;
+
 
 interface PostRepositoryInterface
 {
