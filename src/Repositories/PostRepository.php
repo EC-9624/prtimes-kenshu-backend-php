@@ -19,7 +19,7 @@ class PostRepository implements PostRepositoryInterface
      * Fetch all posts.
      * Returns an array of associative arrays, each containing:
      *   post_id, title, slug, author (user_name), author_id, image_path, created_at
-     *
+     *Use For Listview
      * @return array<int, array{post_id: string, title: string, slug: string, author: string, author_id: string, image_path: ?string, created_at: string}>
      */
     public function fetchAllPostsRaw(): array
@@ -110,7 +110,7 @@ class PostRepository implements PostRepositoryInterface
 
     /**
      * Given an array of post IDs, fetch those posts’ raw data (no tags).
-     *
+     * Use For Listview
      * @param string[] $postIds
      * @return array<int, array{post_id: string, title: string, slug: string, author: string, author_id: string, image_path: ?string, created_at: string}>
      */
@@ -169,4 +169,6 @@ class PostRepository implements PostRepositoryInterface
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function create() {}
 }
