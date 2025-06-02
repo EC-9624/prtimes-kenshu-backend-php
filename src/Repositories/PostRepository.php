@@ -4,9 +4,7 @@ namespace App\Repositories;
 
 use App\Core\Database;
 use App\Repositories\Interfaces\PostRepositoryInterface;
-use App\Models\Post;
 use PDO;
-use PDOException;
 
 class PostRepository implements PostRepositoryInterface
 {
@@ -17,11 +15,17 @@ class PostRepository implements PostRepositoryInterface
         $this->pdo = $database->getConnection();
     }
 
-    public function getAllPosts()
+    /**
+     * Fetch all posts.
+     * Returns an array of associative arrays, each containing:
+     *   post_id, title, slug, author (user_name), author_id, image_path, created_at
+     *
+     * @return array<int, array{post_id: string, title: string, slug: string, author: string, author_id: string, image_path: ?string, created_at: string}>
+     */
+    public function fetchAllPostsRaw(): array
     {
-        try {
-            // Fetch all posts
-            $postStmt = $this->pdo->prepare(" SELECT
+        $sql =
+            "SELECT
                 p.post_id,
                 p.title,
                 p.slug,
@@ -32,74 +36,89 @@ class PostRepository implements PostRepositoryInterface
             FROM posts p
             JOIN users u ON p.user_id = u.user_id
             LEFT JOIN images i ON p.thumbnail_image_id = i.image_id
-            ORDER BY p.created_at DESC");
-            $postStmt->execute();
-            $postRows = $postStmt->fetchAll();
+            WHERE p.deleted_at IS NULL
+            ORDER BY p.created_at DESC
+            ";
 
-            if (count($postRows) === 0) {
-                return [];
-            }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-            // Fetch all tags for all posts
-            $tagStmt = $this->pdo->prepare(" SELECT
+    /**
+     * Fetch tags for a given list of post IDs.
+     * Returns an array of rows, each containing:
+     *   post_id, name, slug
+     *
+     * @param string[] $postIds
+     * @return array<int, array{post_id: string, name: string, slug: string}>
+     */
+    public function fetchTagsByPostIds(array $postIds): array
+    {
+        if (count($postIds) === 0) {
+            return [];
+        }
+
+        // Build an IN-clause with the correct number of placeholders
+        $inClause = implode(',', array_fill(0, count($postIds), '?'));
+
+        $sql =
+            "SELECT
                 pt.post_id,
                 t.name,
                 t.slug
             FROM post_tags pt
-            JOIN tags t ON pt.tag_id = t.tag_id");
-            $tagStmt->execute();
-            $tagRows = $tagStmt->fetchAll();
+            JOIN tags t ON pt.tag_id = t.tag_id
+            WHERE pt.post_id IN ($inClause)
+        ";
 
-            // Group tags by post_id
-            $tagMap = [];
-            foreach ($tagRows as $tag) {
-                $postId = $tag['post_id'];
-                if (!isset($tagMap[$postId])) {
-                    $tagMap[$postId] = [];
-                }
-                $tagMap[$postId][] = [
-                    'name' => $tag['name'],
-                    'slug' => $tag['slug']
-                ];
-            }
-
-            // Combine post data with encoded tags
-            $posts = [];
-            foreach ($postRows as $row) {
-                $row['tags_json'] = json_encode($tagMap[$row['post_id']] ?? []);
-                $posts[] = Post::fromListViewData($row);
-            }
-
-            return $posts;
-        } catch (PDOException $e) {
-            error_log("Database error: " . $e->getMessage());
-            print_r("Database error: " . $e->getMessage());
-            return [];
-        }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($postIds);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-
-    public function getPostsByTag(string $tagSlug): array
+    /**
+     * Fetch post IDs that are linked to a given tag slug.
+     *
+     * @param string $tagSlug
+     * @return string[] Array of post_id strings (UUIDs)
+     */
+    public function fetchPostIdsByTag(string $tagSlug): array
     {
-        try {
-            // Get post IDs that have the tag
-            $stmt = $this->pdo->prepare("SELECT DISTINCT p.post_id
+        $sql =
+            "SELECT DISTINCT 
+                p.post_id
             FROM posts p
             JOIN post_tags pt ON pt.post_id = p.post_id
             JOIN tags t ON t.tag_id = pt.tag_id
-            WHERE t.slug = :tag_slug");
-            $stmt->bindParam(':tag_slug', $tagSlug, PDO::PARAM_STR);
-            $stmt->execute();
-            $postIdRows = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            WHERE t.slug = :tag_slug
+              AND p.deleted_at IS NULL
+        ";
 
-            if (empty($postIdRows)) {
-                return [];
-            }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':tag_slug', $tagSlug, PDO::PARAM_STR);
+        $stmt->execute();
 
-            // Get full post info
-            $inClause = implode(',', array_fill(0, count($postIdRows), '?'));
+        // FETCH_COLUMN gives a flat array of post_id strings
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
 
-            $stmt = $this->pdo->prepare("SELECT
+    /**
+     * Given an array of post IDs, fetch those posts’ raw data (no tags).
+     *
+     * @param string[] $postIds
+     * @return array<int, array{post_id: string, title: string, slug: string, author: string, author_id: string, image_path: ?string, created_at: string}>
+     */
+    public function fetchPostsByIdsRaw(array $postIds): array
+    {
+        if (empty($postIds)) {
+            return [];
+        }
+
+        $inClause = implode(',', array_fill(0, count($postIds), '?'));
+
+        $sql =
+            "SELECT
                 p.post_id,
                 p.title,
                 p.slug,
@@ -111,47 +130,12 @@ class PostRepository implements PostRepositoryInterface
             JOIN users u ON p.user_id = u.user_id
             LEFT JOIN images i ON p.thumbnail_image_id = i.image_id
             WHERE p.post_id IN ($inClause)
-            ORDER BY p.created_at DESC");
-            $stmt->execute($postIdRows);
-            $postRows = $stmt->fetchAll();
+              AND p.deleted_at IS NULL
+            ORDER BY p.created_at DESC
+        ";
 
-            //  Get all tags for these posts
-            $stmt = $this->pdo->prepare("SELECT
-                pt.post_id,
-                t.name,
-                t.slug
-            FROM post_tags pt
-            JOIN tags t ON pt.tag_id = t.tag_id
-            WHERE pt.post_id IN ($inClause)");
-            $stmt->execute($postIdRows);
-            $tagRows = $stmt->fetchAll();
-
-            // Group tags by post_id
-            $tagMap = [];
-            foreach ($tagRows as $tag) {
-                $postId = $tag['post_id'];
-                $tagMap[$postId][] = [
-                    'name' => $tag['name'],
-                    'slug' => $tag['slug']
-                ];
-            }
-
-            // Build Post objects
-            $posts = [];
-            foreach ($postRows as $row) {
-                $row['tags_json'] = json_encode($tagMap[$row['post_id']] ?? []);
-                $posts[] = Post::fromListViewData($row);
-            }
-
-            return $posts;
-        } catch (PDOException $e) {
-            error_log("Database error: " . $e->getMessage());
-            print_r("Database error: " . $e->getMessage());
-            return [];
-        }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($postIds);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
-    // public function findById(UuidInterface $postId): ?Post {}
-    // public function create(): Post {}
-
 }

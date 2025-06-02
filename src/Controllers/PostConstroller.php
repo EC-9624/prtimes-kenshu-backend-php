@@ -11,7 +11,6 @@ class PostConstroller
     public function showPost(string $post_slug)
     {
         render('post/show', ['title' => 'Post Detail Page']);
-        var_dump($post_slug);
     }
     //GET /create-post
     public function showCreatePost()

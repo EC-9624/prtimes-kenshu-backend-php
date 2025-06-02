@@ -7,7 +7,8 @@ use Ramsey\Uuid\UuidInterface;
 
 interface PostRepositoryInterface
 {
-    public function getAllPosts();
-    // public function findById(UuidInterface $postId): ?Post;
-    // public function create(): Post;
+    public function fetchAllPostsRaw(): array;
+    public function fetchTagsByPostIds(array $postIds): array;
+    public function fetchPostIdsByTag(string $tagSlug): array;
+    public function fetchPostsByIdsRaw(array $postIds): array;
 }
