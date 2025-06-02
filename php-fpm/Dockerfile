@@ -10,6 +10,8 @@ RUN apk add --no-cache \
 # Install Redis extension
 RUN pecl install redis && docker-php-ext-enable redis
 
+RUN chown www-data:www-data /var/log/ && chmod 755 /var/log/
+
 WORKDIR /var/www/html
 
 COPY --from=composer/composer:latest /usr/bin/composer /usr/bin/composer
