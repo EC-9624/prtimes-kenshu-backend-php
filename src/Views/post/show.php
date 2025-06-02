@@ -10,7 +10,7 @@
         </div>
         <!-- Post content -->
         <div class="space-y-4 w-full">
-            <div class="border-b pb-4 w-full last:border-none">
+            <div class="pb-4 w-full">
                 <!-- Title -->
                 <h1 class="text-2xl font-semibold text-gray-900">
                     <?= htmlspecialchars($data->title) ?>
