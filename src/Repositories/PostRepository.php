@@ -111,7 +111,7 @@ class PostRepository implements PostRepositoryInterface
      */
     public function fetchPostsByIdsRaw(array $postIds): array
     {
-        if (empty($postIds)) {
+        if (count($postIds) === 0) {
             return [];
         }
 
