@@ -46,15 +46,20 @@ class PostRepository implements PostRepositoryInterface
     }
 
     /**
-     * Fetch tags for a given list of post IDs.
+     * Fetch tags for a given list of post IDs or a single post ID.
      * Returns an array of rows, each containing:
-     *   post_id, name, slug
+     * post_id, name, slug
      *
-     * @param string[] $postIds
+     * @param string|string[] $postIds A single post ID as a string, or an array of post IDs.
      * @return array<int, array{post_id: string, name: string, slug: string}>
      */
-    public function fetchTagsByPostIds(array $postIds): array
+    public function fetchTagsByPostIds(string|array $postIds): array
     {
+        // Ensure $postIds is always an array for consistent processing
+        if (!is_array($postIds)) {
+            $postIds = [$postIds];
+        }
+
         if (count($postIds) === 0) {
             return [];
         }
@@ -64,13 +69,13 @@ class PostRepository implements PostRepositoryInterface
 
         $sql =
             "SELECT
-                pt.post_id,
-                t.name,
-                t.slug
-            FROM post_tags pt
-            JOIN tags t ON pt.tag_id = t.tag_id
-            WHERE pt.post_id IN ($inClause)
-        ";
+            pt.post_id,
+            t.name,
+            t.slug
+        FROM post_tags pt
+        JOIN tags t ON pt.tag_id = t.tag_id
+        WHERE pt.post_id IN ($inClause)
+    ";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($postIds);
@@ -92,7 +97,7 @@ class PostRepository implements PostRepositoryInterface
             JOIN post_tags pt ON pt.post_id = p.post_id
             JOIN tags t ON t.tag_id = pt.tag_id
             WHERE t.slug = :tag_slug
-              AND p.deleted_at IS NULL
+            AND p.deleted_at IS NULL
         ";
 
         $stmt = $this->pdo->prepare($sql);
@@ -130,12 +135,38 @@ class PostRepository implements PostRepositoryInterface
             JOIN users u ON p.user_id = u.user_id
             LEFT JOIN images i ON p.thumbnail_image_id = i.image_id
             WHERE p.post_id IN ($inClause)
-              AND p.deleted_at IS NULL
+            AND p.deleted_at IS NULL
             ORDER BY p.created_at DESC
         ";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($postIds);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function fetchPostBySlug(string $postSlug)
+    {
+        $sql =
+            "SELECT
+                p.post_id,
+                p.title,
+                p.slug,
+                p.text,
+                u.user_name AS author,
+                u.user_id AS author_id,
+                i.image_path,
+                p.created_at
+            FROM posts p
+            JOIN users u ON p.user_id = u.user_id
+            LEFT JOIN images i ON p.thumbnail_image_id = i.image_id
+            WHERE p.slug = :post_slug
+            AND p.deleted_at IS NULL
+            ORDER BY p.created_at DESC
+            ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':post_slug', $postSlug, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }
