@@ -1,3 +1,4 @@
+<?php print_r($_SESSION); ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -22,12 +23,17 @@
                         <div><span class="font-semibold">Email:</span> <?= htmlspecialchars($_SESSION['email']) ?></div>
                     </div>
                 </div>
+                <div class="flex gap-2">
+                    <a class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-md" href="/create-post">
+                        Post
+                    </a>
+                    <form action="/logout" method="GET">
+                        <button class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">
+                            Logout
+                        </button>
+                    </form>
+                </div>
 
-                <form action="/logout" method="GET">
-                    <button class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">
-                        Logout
-                    </button>
-                </form>
             <?php else: ?>
                 <a class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md" href="/login">
                     Login

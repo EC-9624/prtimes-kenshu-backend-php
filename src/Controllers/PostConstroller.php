@@ -57,6 +57,7 @@ class PostConstroller
 
         render('post/show', ['title' => 'Post Detail Page', 'data' => $post]);
     }
+
     //GET /create-post
     public function showCreatePost()
     {
