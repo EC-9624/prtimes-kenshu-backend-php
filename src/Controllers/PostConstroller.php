@@ -151,10 +151,7 @@ class PostConstroller
         $this->postRepo->create($postData);
 
 
-        echo '<pre>';
-        print_r($postData);
-        echo '</pre>';
-
+        echo '<pre>' . htmlspecialchars(print_r($postData, true)) . '</pre>';
 
         echo 'createPost called';
     }
