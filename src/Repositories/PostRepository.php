@@ -284,11 +284,19 @@ class PostRepository implements PostRepositoryInterface
             }
 
             // Update post to reference thumbnail_image_id
-            $updatePostSql = "UPDATE posts SET thumbnail_image_id = :thumbnail_image_id WHERE post_id = :post_id";
-            $this->pdo->prepare($updatePostSql)->execute([
-                ':thumbnail_image_id' => $imageId,
-                ':post_id'            => $postId,
-            ]);
+            if ($imageId !== null) {
+                $updateImageSql = "
+                    UPDATE images
+                    SET post_id = :post_id
+                    WHERE image_id = :image_id
+                ";
+                $updateImageStmt = $this->pdo->prepare($updateImageSql);
+                $updateImageStmt->execute([
+                    ':post_id' => $postId,
+                    ':image_id' => $imageId,
+                ]);
+            }
+
             $this->pdo->commit();
         } catch (Exception $e) {
             $this->pdo->rollBack();
