@@ -55,10 +55,10 @@ class PostRepository implements PostRepositoryInterface
      * Returns an array of rows, each containing:
      * post_id, name, slug
      *
-     * @param string|string[] $postIds A single post ID as a string, or an array of post IDs.
+     * @param string[] $postIds A single post ID as a string, or an array of post IDs.
      * @return array<int, array{post_id: string, name: string, slug: string}>
      */
-    public function fetchTagsByPostIds(string|array $postIds): array
+    public function fetchTagsByPostIds(array $postIds): array
     {
         // Ensure $postIds is always an array for consistent processing
         if (!is_array($postIds)) {
@@ -154,7 +154,7 @@ class PostRepository implements PostRepositoryInterface
      * 
      * @return array< {post_id: string, title: string, slug: string, author: string, author_id: string, image_path: ?string, created_at: string}>
      */
-    public function fetchPostBySlug(string $postSlug)
+    public function fetchPostBySlug(string $postSlug): array
     {
         $sql =
             "SELECT
@@ -177,9 +177,7 @@ class PostRepository implements PostRepositoryInterface
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':post_slug', $postSlug, PDO::PARAM_STR);
         $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        var_dump($result);
-        return $result;
+        return  $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -194,9 +192,11 @@ class PostRepository implements PostRepositoryInterface
      * alt_text?: string|null,
      * tag_slugs?: string[]|null
      * } $data
+     * @return void Returns null only if the file upload fails before DB insert begins.
      *
+     * @throws PDOException If a database operation fails.
      */
-    public function create(array $data)
+    public function create(array $data): void
     {
         try {
 
@@ -218,7 +218,7 @@ class PostRepository implements PostRepositoryInterface
 
                 if (!$uploadResult) {
                     $this->pdo->rollBack();
-                    return null;
+                    return;
                 }
 
                 $imageId = $uploadResult['image_id'];

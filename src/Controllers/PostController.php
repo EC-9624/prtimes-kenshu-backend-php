@@ -25,7 +25,7 @@ class PostController
     {
         $postRow = $this->postRepo->fetchPostBySlug($post_slug);
         $postId = $postRow['post_id'];
-        $tagRows = $this->postRepo->fetchTagsByPostIds($postId);
+        $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
         $tagMap = $this->groupTagsByPostId($tagRows);
         $tagsForThisPost = $tagMap[$postId] ?? [];
 
@@ -63,7 +63,7 @@ class PostController
     }
 
     // POST /create-post
-    public function createPost($body)
+    public function createPost($body): void
     {
         if (!isset($_SESSION['user_id'])) {
             $_SESSION['errors'] = ['Please log in to create a post.'];
