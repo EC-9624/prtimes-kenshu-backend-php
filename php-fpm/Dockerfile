@@ -12,6 +12,10 @@ RUN pecl install redis && docker-php-ext-enable redis
 
 RUN chown www-data:www-data /var/log/ && chmod 755 /var/log/
 
+RUN mkdir -p /var/tmp/php_upload_tmp \
+    && chown www-data:www-data /var/tmp/php_upload_tmp \
+    && chmod 755 /var/tmp/php_upload_tmp
+
 WORKDIR /var/www/html
 
 COPY --from=composer/composer:latest /usr/bin/composer /usr/bin/composer

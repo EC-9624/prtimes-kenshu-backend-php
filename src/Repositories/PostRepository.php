@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Core\Database;
 use App\Repositories\Interfaces\PostRepositoryInterface;
 use App\Models\Post;
+use Exception;
 use PDO;
 use Ramsey\Uuid\Uuid;
 
@@ -13,6 +14,7 @@ use Ramsey\Uuid\Uuid;
 class PostRepository implements PostRepositoryInterface
 {
     private PDO $pdo;
+    private string $uploadFileSystemDirectory = __DIR__ . '/../../public/img/uploads/';
 
     public function __construct(Database $database)
     {
@@ -174,122 +176,156 @@ class PostRepository implements PostRepositoryInterface
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    //     
-    //     [
-    //     'user_id'     => 'a2aef7d4-9c68-4e9f-b345-1e3ac93f1bb7',
-    //     'title'       => 'My First Post',
-    //     'slug'        => 'my-first-post',
-    //     'text'        => 'This is the body of the post.',
-    //     'image_path'  => '/uploads/example.jpg',  // optional
-    //     'alt_text'    => 'Sample thumbnail',      // optional
-    //     'tag_slugs'   => ['technology', 'mobile'] // optional
-    // ]
-
     /**
      * Create a new post, optional thumbnail image, and optional tags.
      *
      * @param array{
-     *   user_id: string,
-     *   title: string,
-     *   slug: string,
-     *   text: string,
-     *   image_path?: string|null,
-     *   alt_text?: string|null,
-     *   tag_slugs?: string[]|null
+     * user_id: string,
+     * title: string,
+     * slug: string,
+     * text: string,
+     * thumbnail_file_data?: array<string, mixed>|null, 
+     * alt_text?: string|null,
+     * tag_slugs?: string[]|null
      * } $data
      *
-     * @return Post|null  The newly‐created Post model, or null on failure.
-     *                    
      */
-    public function create(array $data) //: ?Post
+    public function create(array $data)
     {
-        $this->pdo->beginTransaction();
+        try {
 
-        // Generate UUIDs
-        $postId = Uuid::uuid4()->toString();
-        $imageId = null;
+            $this->pdo->beginTransaction();
 
-        // If an image_path was passed and is not empty, generate imageId now
-        if (
-            array_key_exists('image_path', $data)
-            && $data['image_path'] !== null
-            && trim((string)$data['image_path']) !== ''
-        ) {
-            $imageId = Uuid::uuid4()->toString();
-        }
+            $postId = Uuid::uuid4()->toString();
+            $imageId = null;
+            $imagePath = null;
 
-        // Insert the post row (thumbnail_image_id may be null or actual UUID)
-        $postSql = "
-                INSERT INTO posts
-                  (post_id, user_id, title, slug, text, thumbnail_image_id, created_at)
-                VALUES
-                  (:post_id, :user_id, :title, :slug, :text, :thumbnail_image_id, NOW())
-            ";
-        $postStmt = $this->pdo->prepare($postSql);
-        $postStmt->execute([
-            ':post_id'            => $postId,
-            ':user_id'            => $data['user_id'],
-            ':title'              => $data['title'],
-            ':slug'               => $data['slug'],
-            ':text'               => $data['text'],
-            ':thumbnail_image_id' => $imageId,       // may be null
-        ]);
+            // --- Handle File Upload and insert image first ---
+            if (
+                array_key_exists('thumbnail_file_data', $data)
+                && is_array($data['thumbnail_file_data'])
+                && isset($data['thumbnail_file_data']['tmp_name'])
+                && $data['thumbnail_file_data']['error'] === UPLOAD_ERR_OK
+                && !empty($data['thumbnail_file_data']['tmp_name'])
+            ) {
+                $uploadResult = $this->handleFileUpload($data['thumbnail_file_data']);
 
-        // If we have an image, insert into images with post_id referencing the new post
-        if ($imageId !== null) {
-            $imageSql = "
-                    INSERT INTO images
-                      (image_id, post_id, image_path, alt_text, created_at)
-                    VALUES
-                      (:image_id, :post_id, :image_path, :alt_text, NOW())
-                ";
-            $imageStmt = $this->pdo->prepare($imageSql);
-            $imageStmt->execute([
-                ':image_id'   => $imageId,
-                ':post_id'    => $postId,
-                ':image_path' => $data['image_path'],
-                ':alt_text'   => $data['alt_text'] ?? null,
+                if (!$uploadResult) {
+                    $this->pdo->rollBack();
+                    return null;
+                }
+
+                $imageId = $uploadResult['image_id'];
+                $imagePath = $uploadResult['image_path'];
+
+                // Insert image BEFORE the post
+                $imageSql = "
+            INSERT INTO images
+              (image_id, image_path, alt_text, created_at)
+            VALUES
+              (:image_id, :image_path, :alt_text, NOW())
+        ";
+                $imageStmt = $this->pdo->prepare($imageSql);
+                $imageStmt->execute([
+                    ':image_id'   => $imageId,
+                    ':image_path' => $imagePath,
+                    ':alt_text'   => $data['alt_text'] ?? null,
+                ]);
+            }
+
+            // --- Insert Post (with thumbnail_image_id if present) ---
+            $postSql = "
+        INSERT INTO posts
+          (post_id, user_id, title, slug, text, thumbnail_image_id, created_at)
+        VALUES
+          (:post_id, :user_id, :title, :slug, :text, :thumbnail_image_id, NOW())
+    ";
+            $postStmt = $this->pdo->prepare($postSql);
+            $postStmt->execute([
+                ':post_id'            => $postId,
+                ':user_id'            => $data['user_id'],
+                ':title'              => $data['title'],
+                ':slug'               => $data['slug'],
+                ':text'               => $data['text'],
+                ':thumbnail_image_id' => $imageId,
             ]);
-        }
 
-        // If tag_slugs is a non‐empty array, fetch their IDs and insert into post_tags
-        if (
-            array_key_exists('tag_slugs', $data)
-            && is_array($data['tag_slugs'])
-            && count($data['tag_slugs']) > 0
-        ) {
-            $tagSlugs = $data['tag_slugs'];
-            // Build an IN clause 
-            $placeholders = implode(',', array_fill(0, count($tagSlugs), '?'));
-            $tagFetchSql = "
-                    SELECT tag_id
-                    FROM tags
-                    WHERE slug IN ($placeholders)
-                ";
-            $tagFetchStmt = $this->pdo->prepare($tagFetchSql);
-            // Execute with numeric array of tag slugs
-            $tagFetchStmt->execute($tagSlugs);
-            $foundTags = $tagFetchStmt->fetchAll(PDO::FETCH_COLUMN);
+            // --- Insert tag relations if present ---
+            if (
+                array_key_exists('tag_slugs', $data)
+                && is_array($data['tag_slugs'])
+                && count($data['tag_slugs']) > 0
+            ) {
+                $tagSlugs = $data['tag_slugs'];
+                $placeholders = implode(',', array_fill(0, count($tagSlugs), '?'));
 
-            if (is_array($foundTags) && count($foundTags) > 0) {
-                $tagInsertSql = "
-                        INSERT INTO post_tags (post_id, tag_id, created_at)
-                        VALUES (:post_id, :tag_id, NOW())
-                    ";
-                $tagInsertStmt = $this->pdo->prepare($tagInsertSql);
-                foreach ($foundTags as $tagId) {
-                    $tagInsertStmt->execute([
-                        ':post_id' => $postId,
-                        ':tag_id'  => $tagId,
-                    ]);
+                $tagFetchSql = "
+            SELECT tag_id
+            FROM tags
+            WHERE slug IN ($placeholders)
+        ";
+                $tagFetchStmt = $this->pdo->prepare($tagFetchSql);
+                $tagFetchStmt->execute($tagSlugs);
+                $foundTags = $tagFetchStmt->fetchAll(PDO::FETCH_COLUMN);
+
+                if (is_array($foundTags) && count($foundTags) > 0) {
+                    $tagInsertSql = "
+                INSERT INTO post_tags (post_id, tag_id, created_at)
+                VALUES (:post_id, :tag_id, NOW())
+            ";
+                    $tagInsertStmt = $this->pdo->prepare($tagInsertSql);
+                    foreach ($foundTags as $tagId) {
+                        $tagInsertStmt->execute([
+                            ':post_id' => $postId,
+                            ':tag_id'  => $tagId,
+                        ]);
+                    }
                 }
             }
+
+            // Update post to reference thumbnail_image_id
+            $updatePostSql = "UPDATE posts SET thumbnail_image_id = :thumbnail_image_id WHERE post_id = :post_id";
+            $this->pdo->prepare($updatePostSql)->execute([
+                ':thumbnail_image_id' => $imageId,
+                ':post_id'            => $postId,
+            ]);
+            $this->pdo->commit();
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+
+    private function handleFileUpload(array $uploadedFile): ?array
+    {
+        // Validate file type
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+        if (!in_array($uploadedFile['type'], $allowedMimeTypes)) {
+            echo ("Invalid file type: " . $uploadedFile['type']);
+            error_log("Invalid file type: " . $uploadedFile['type']);
+            return null;
         }
 
-        $this->pdo->commit();
 
-        //Return the freshly‐created post 
-        $rows = $this->fetchPostsByIdsRaw([$postId]);
-        return count($rows) ? $rows[0] : null;
+        // Generate new filename
+        $fileExtension = pathinfo($uploadedFile['name'], PATHINFO_EXTENSION);
+        $originalNameWithoutExt = pathinfo($uploadedFile['name'], PATHINFO_FILENAME);
+        $timestamp = date('Ymd_His');
+        $sanitizedFilename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $originalNameWithoutExt);
+        $newFileName = $timestamp . '_' . $sanitizedFilename . '.' . $fileExtension;
+        $destinationPath = $this->uploadFileSystemDirectory . $newFileName;
+
+        // Move the file
+        if (!move_uploaded_file($uploadedFile['tmp_name'], $destinationPath)) {
+            echo ("Failed to move uploaded file.");
+            error_log("Failed to move uploaded file.");
+            return null;
+        }
+
+        return [
+            'image_id'   => Uuid::uuid4()->toString(),
+            'image_path' => '/img/uploads/' . $newFileName,
+        ];
     }
 }

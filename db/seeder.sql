@@ -31,9 +31,9 @@ VALUES
 INSERT INTO images (image_id, post_id, image_path, alt_text)
 VALUES
   -- Thumbnail for post 1
-  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', NULL, 'Tech Thumbnail'),
+  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '/img/image-placeholder.svg', 'Tech Thumbnail'),
   -- Thumbnail for post 2
-  ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', NULL, 'Gourmet Thumbnail'),
+  ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', '/img/image-placeholder.svg', 'Gourmet Thumbnail'),
   -- Inline image for post 1
   ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '/images/tech-graph.jpg', 'Tech Growth Chart');
 

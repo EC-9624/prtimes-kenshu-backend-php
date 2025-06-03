@@ -61,19 +61,104 @@ class PostConstroller
     //GET /create-post
     public function showCreatePost()
     {
-        //check session if not redirect to login
+        $errors = $_SESSION['errors'] ?? [];
+        $old = $_SESSION['old'] ?? [];
 
-        render('post/create', ['title' => 'Create Post Page']);
+        unset($_SESSION['errors'], $_SESSION['old']);
+
+        render('post/create', [
+            'title' => 'Create Post Page',
+            'errors' => $errors,
+            'old' => $old,
+        ]);
     }
+
     //POST /create-post
     public function createPost($body)
     {
-        var_dump($body);
-        //will be call from create showCreatePost page 
-        //get user info from session
-        // $this->postRepo->create();
-        echo 'create called';
+        if (!isset($_SESSION['user_id'])) {
+            $_SESSION['errors'] = ['Please log in to create a post.'];
+            header('Location: /login');
+            exit();
+        }
+
+        $userId = $_SESSION['user_id'];
+        $title = trim($body['title'] ?? '');
+        $slug = trim($body['slug'] ?? '');
+        $text = trim($body['text'] ?? '');
+        $tagSlugs = $body['tag_slugs'] ?? [];
+        $altText = trim($body['alt_text'] ?? '');
+
+        $thumbnailFileData = null;
+        if (isset($_FILES['thumbnail_image']) && $_FILES['thumbnail_image']['error'] === UPLOAD_ERR_OK) {
+            $thumbnailFileData = $_FILES['thumbnail_image'];
+        } else if (isset($_FILES['thumbnail_image']) && $_FILES['thumbnail_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $_SESSION['errors'] = ['File upload failed with error code: ' . $_FILES['thumbnail_image']['error']];
+            $_SESSION['old'] = $body;
+            header('Location: /create-post');
+            exit();
+        }
+
+        // Validate input
+        $errors = [];
+
+        if ($title === '') {
+            $errors[] = 'Post title is required.';
+        }
+
+        if ($slug === '') {
+            $errors[] = 'Post slug is required.';
+        }
+
+        if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
+            $errors[] = 'Slug must only contain lowercase letters, numbers, and hyphens.';
+        }
+
+        if ($text === '') {
+            $errors[] = 'Post content is required.';
+        }
+
+        if ($thumbnailFileData) {
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!in_array($thumbnailFileData['type'], $allowedTypes)) {
+                $errors[] = 'Thumbnail image must be JPG, PNG, GIF, or WebP.';
+            }
+        }
+
+        if (strlen($altText) > 255) {
+            $errors[] = 'Alt text must be 255 characters or fewer.';
+        }
+
+
+        if (count($errors) > 0) {
+            $_SESSION['errors'] = $errors;
+            $_SESSION['old'] = $body;
+            header('Location: /create-post');
+            exit();
+        }
+
+        // Passed validation
+        $postData = [
+            'user_id'             => $userId,
+            'title'               => $title,
+            'slug'                => $slug,
+            'text'                => $text,
+            'thumbnail_file_data' => $thumbnailFileData,
+            'alt_text'            => $altText,
+            'tag_slugs'           => $tagSlugs,
+        ];
+
+        $this->postRepo->create($postData);
+
+
+        echo '<pre>';
+        print_r($postData);
+        echo '</pre>';
+
+
+        echo 'createPost called';
     }
+
     //GET /posts/post_slug/edit
     public function showEditpost() {}
 
