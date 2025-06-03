@@ -6,7 +6,7 @@ use App\Controllers\AuthController;
 use App\Core\Database;
 use App\Core\Router;
 use App\Controllers\HomeController;
-use App\Controllers\PostConstroller;
+use App\Controllers\PostController;
 
 class app
 {
@@ -35,12 +35,12 @@ class app
         //users
 
         //posts
-        $this->router->get('/posts/{post_slug}', [PostConstroller::class, 'showPost']);
-        $this->router->get('/create-post', [PostConstroller::class, 'showCreatePost']);
-        $this->router->post('/create-post', [PostConstroller::class, 'createPost']);
-        $this->router->get('/posts/{post_id}/edit', [PostConstroller::class, 'showEditpost']);
-        $this->router->patch('/posts/{post_id}/edit', [PostConstroller::class, 'editPost']);
-        $this->router->delete('/posts/{post_id}/delete', [PostConstroller::class, 'deletePost']);
+        $this->router->get('/posts/{post_slug}', [PostController::class, 'showPost']);
+        $this->router->get('/create-post', [PostController::class, 'showCreatePost']);
+        $this->router->post('/create-post', [PostController::class, 'createPost']);
+        $this->router->get('/posts/{post_id}/edit', [PostController::class, 'showEditpost']);
+        $this->router->patch('/posts/{post_id}/edit', [PostController::class, 'editPost']);
+        $this->router->delete('/posts/{post_id}/delete', [PostController::class, 'deletePost']);
 
         $this->router->get('/info', function () {
             phpinfo();
