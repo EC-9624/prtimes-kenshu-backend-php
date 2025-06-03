@@ -4,8 +4,7 @@ namespace App\Repositories;
 
 use App\Core\Database;
 use App\Repositories\Interfaces\PostRepositoryInterface;
-use App\Models\Post;
-use Exception;
+use PDOException;
 use PDO;
 use Ramsey\Uuid\Uuid;
 
@@ -298,7 +297,7 @@ class PostRepository implements PostRepositoryInterface
             }
 
             $this->pdo->commit();
-        } catch (Exception $e) {
+        } catch (PDOException $e) {
             $this->pdo->rollBack();
             throw $e;
         }
