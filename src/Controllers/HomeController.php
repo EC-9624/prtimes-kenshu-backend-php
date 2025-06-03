@@ -23,7 +23,6 @@ class HomeController
      */
     public function index()
     {
-        // Fetch all raw post rows
         $postRows = $this->postRepo->fetchAllPostsRaw();
         if (count($postRows) === 0) {
             render('home/index', [
@@ -33,34 +32,10 @@ class HomeController
             return;
         }
 
-        // Extract all post IDs
         $postIds = array_map(static fn($row) => $row['post_id'], $postRows);
-
-        // Fetch tags for all these post IDs
         $tagRows = $this->postRepo->fetchTagsByPostIds($postIds);
-
-        // Group tags by post_id
-        $tagMap = [];
-        foreach ($tagRows as $tag) {
-            $pid = $tag['post_id'];
-            if (!isset($tagMap[$pid])) {
-                $tagMap[$pid] = [];
-            }
-            $tagMap[$pid][] = [
-                'name' => $tag['name'],
-                'slug' => $tag['slug'],
-            ];
-        }
-
-        // Build Post models
-        $posts = [];
-        foreach ($postRows as $row) {
-            $tagsForThisPost = $tagMap[$row['post_id']] ?? null;
-            $row['tags_json'] = json_encode($tagsForThisPost);
-
-            // fromListViewData
-            $posts[] = Post::fromListViewData($row);
-        }
+        $tagMap = $this->groupTagsByPostId($tagRows);
+        $posts = $this->buildPostModels($postRows, $tagMap);
 
         render('home/index', [
             'title' => 'Home Page',
@@ -75,11 +50,7 @@ class HomeController
      */
     public function showCategory(string $category)
     {
-
-
-        // get all post IDs that match this tag slug
         $postIds = $this->postRepo->fetchPostIdsByTag($category);
-
         if (count($postIds) === 0) {
             render('home/index', [
                 'title' => $category . ' Page',
@@ -88,13 +59,25 @@ class HomeController
             return;
         }
 
-        // Fetch only those posts’ raw data
         $postRows = $this->postRepo->fetchPostsByIdsRaw($postIds);
-
-        // Fetch tags for exactly these posts
         $tagRows = $this->postRepo->fetchTagsByPostIds($postIds);
+        $tagMap = $this->groupTagsByPostId($tagRows);
+        $posts = $this->buildPostModels($postRows, $tagMap);
 
-        // Group tags by post_id
+        render('home/index', [
+            'title' => $category . ' Page',
+            'data'  => $posts
+        ]);
+    }
+
+    /**
+     * Group tag rows by post ID.
+     *
+     * @param array $tagRows
+     * @return array
+     */
+    private function groupTagsByPostId(array $tagRows): array
+    {
         $tagMap = [];
         foreach ($tagRows as $tag) {
             $pid = $tag['post_id'];
@@ -106,18 +89,24 @@ class HomeController
                 'slug' => $tag['slug'],
             ];
         }
+        return $tagMap;
+    }
 
-        // Build Post models
+    /**
+     * Build Post models from raw post rows and tag map.
+     *
+     * @param array $postRows
+     * @param array $tagMap
+     * @return array
+     */
+    private function buildPostModels(array $postRows, array $tagMap): array
+    {
         $posts = [];
         foreach ($postRows as $row) {
             $tagsForThisPost = $tagMap[$row['post_id']] ?? [];
             $row['tags_json'] = json_encode($tagsForThisPost);
             $posts[] = Post::fromListViewData($row);
         }
-
-        render('home/index', [
-            'title' => $category . ' Page',
-            'data'  => $posts
-        ]);
+        return $posts;
     }
 }
