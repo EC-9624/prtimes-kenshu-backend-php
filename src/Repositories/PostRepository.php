@@ -149,6 +149,19 @@ class PostRepository implements PostRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * @param string $postSlug The slug of the post to retrieve.
+     * 
+     * @return array<string, string|null>|false Returns an associative array with the following keys on success:
+     *   - post_id (string)         : The UUID of the post.
+     *   - title (string)           : The title of the post.
+     *   - slug (string)            : The slug of the post.
+     *   - text (string)            : The main content of the post.
+     *   - author (string)          : The name of the author.
+     *   - author_id (string)       : The UUID of the author.
+     *   - image_path (?string)     : The path to the thumbnail image, or null if not present.
+     *   - created_at (string)      : The datetime string when the post was created.
+     */
     public function fetchPostBySlug(string $postSlug)
     {
         $sql =
@@ -172,7 +185,9 @@ class PostRepository implements PostRepositoryInterface
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':post_slug', $postSlug, PDO::PARAM_STR);
         $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        var_dump($result);
+        return $result;
     }
 
     /**
