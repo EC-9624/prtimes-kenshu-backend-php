@@ -152,15 +152,7 @@ class PostRepository implements PostRepositoryInterface
     /**
      * @param string $postSlug The slug of the post to retrieve.
      * 
-     * @return array<string, string|null>|false Returns an associative array with the following keys on success:
-     *   - post_id (string)         : The UUID of the post.
-     *   - title (string)           : The title of the post.
-     *   - slug (string)            : The slug of the post.
-     *   - text (string)            : The main content of the post.
-     *   - author (string)          : The name of the author.
-     *   - author_id (string)       : The UUID of the author.
-     *   - image_path (?string)     : The path to the thumbnail image, or null if not present.
-     *   - created_at (string)      : The datetime string when the post was created.
+     * @return array< {post_id: string, title: string, slug: string, author: string, author_id: string, image_path: ?string, created_at: string}>
      */
     public function fetchPostBySlug(string $postSlug)
     {
