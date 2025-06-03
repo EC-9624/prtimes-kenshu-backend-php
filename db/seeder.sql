@@ -35,7 +35,7 @@ VALUES
   -- Thumbnail for post 2
   ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', '/img/image-placeholder.svg', 'Gourmet Thumbnail'),
   -- Inline image for post 1
-  ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '/images/tech-graph.jpg', 'Tech Growth Chart');
+  ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '/img/tech-graph.jpg', 'Tech Growth Chart');
 
 -- Link thumbnails to posts
 UPDATE posts SET thumbnail_image_id = '20000000-0000-0000-0000-000000000001' WHERE post_id = '10000000-0000-0000-0000-000000000001';
