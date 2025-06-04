@@ -192,11 +192,11 @@ class PostRepository implements PostRepositoryInterface
      * alt_text?: string|null,
      * tag_slugs?: string[]|null
      * } $data
-     * @return void Returns null only if the file upload fails before DB insert begins.
+     * @return string The ID of the newly created post, or null if file upload fails.
      *
      * @throws PDOException If a database operation fails.
      */
-    public function create(array $data): void
+    public function create(array $data): ?string
     {
         try {
 
@@ -218,7 +218,7 @@ class PostRepository implements PostRepositoryInterface
 
                 if (!$uploadResult) {
                     $this->pdo->rollBack();
-                    return;
+                    return null;
                 }
 
                 $imageId = $uploadResult['image_id'];
@@ -304,6 +304,7 @@ class PostRepository implements PostRepositoryInterface
             }
 
             $this->pdo->commit();
+            return $postId;
         } catch (PDOException $e) {
             $this->pdo->rollBack();
             throw $e;
@@ -316,9 +317,9 @@ class PostRepository implements PostRepositoryInterface
         // Validate file type
         $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
         if (!in_array($uploadedFile['type'], $allowedMimeTypes)) {
-            echo ("Invalid file type: " . $uploadedFile['type']);
-            error_log("Invalid file type: " . $uploadedFile['type']);
-            return null;
+            $message = "Invalid file type: " . $uploadedFile['type'];
+            error_log($message);
+            throw new \RuntimeException($message);
         }
 
 
@@ -332,9 +333,9 @@ class PostRepository implements PostRepositoryInterface
 
         // Move the file
         if (!move_uploaded_file($uploadedFile['tmp_name'], $destinationPath)) {
-            echo ("Failed to move uploaded file.");
-            error_log("Failed to move uploaded file.");
-            return null;
+            $message = "Failed to move uploaded file.";
+            error_log($message);
+            throw new \RuntimeException($message);
         }
 
         return [

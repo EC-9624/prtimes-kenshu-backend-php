@@ -91,8 +91,43 @@ class PostController
             'tag_slugs'           => $validatedData['tag_slugs'],
         ];
 
-        $this->postRepo->create($postData);
-        header('Location: /create-post');
+        $newPostId = $this->postRepo->create($postData);
+
+        if ($newPostId === null) {
+
+            $_SESSION['errors'] = ['Failed to upload thumbnail image.'];
+            $_SESSION['old'] = $body;
+            header('Location: /create-post');
+            exit();
+        }
+
+        $postRow = $this->postRepo->fetchPostBySlug($validatedData['slug']);
+
+        if (!is_array($postRow) && count($postRow) === 0) {
+            $_SESSION['errors'] = ['Failed to retrieve created post.'];
+            header('Location: /create-post');
+            exit();
+        }
+
+        $postId = $postRow['post_id'];
+        $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
+        $tagMap = $this->groupTagsByPostId($tagRows);
+        $tagsForThisPost = $tagMap[$postId] ?? [];
+
+        $newPost = new Post(
+            Uuid::fromString($postRow['post_id']),
+            Uuid::fromString($postRow['author_id']),
+            $postRow['author'],
+            $postRow['slug'],
+            $postRow['title'],
+            $postRow['text'],
+            $postRow['image_path'], // thumbnail_image_path
+            $tagsForThisPost,
+            new DateTimeImmutable($postRow['created_at'])
+        );
+
+        $_SESSION['success_message'] = 'Post created successfully!';
+        header('Location: /posts/' . $newPost->slug);
         exit();
     }
 
