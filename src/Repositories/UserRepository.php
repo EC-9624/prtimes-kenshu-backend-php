@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Models\User;
 use App\Repositories\Interfaces\UserRepositoryInterface;
-use App\Core\Database;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use PDO;
@@ -30,6 +29,21 @@ class UserRepository implements UserRepositoryInterface
                 $row['user_name'],
                 $row['email'],
                 $row['password']
+            )
+            : null;
+    }
+
+    public function findByUsername(string $userName): ?User
+    {
+        $stmt = $this->pdo->prepare("SELECT user_id, user_name, email FROM users WHERE user_name = ? LIMIT 1");
+        $stmt->execute([$userName]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row
+            ? new User(
+                Uuid::fromString($row['user_id']),
+                $row['user_name'],
+                $row['email'],
             )
             : null;
     }

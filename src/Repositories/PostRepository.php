@@ -150,7 +150,7 @@ class PostRepository implements PostRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function fetchPostByUserId(string $userId)
+    public function fetchPostsByUserId(string $userId)
     {
         $sql =
             "SELECT
@@ -171,7 +171,7 @@ class PostRepository implements PostRepositoryInterface
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
         $stmt->execute();
-        return  $stmt->fetch(PDO::FETCH_ASSOC);
+        return  $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
