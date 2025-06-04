@@ -10,6 +10,7 @@ use App\Repositories\PostRepository;
 use Ramsey\Uuid\Uuid;
 use DateTimeImmutable;
 use PDO;
+use PDOException;
 
 class PostController
 {
@@ -50,7 +51,7 @@ class PostController
     }
 
     // GET /create-post
-    public function showCreatePost()
+    public function showCreatePost(): void
     {
         $errors = $_SESSION['errors'] ?? [];
         $old = $_SESSION['old'] ?? [];
@@ -93,45 +94,67 @@ class PostController
             'tag_slugs'           => $validatedData['tag_slugs'],
         ];
 
-        $newPostId = $this->postRepo->create($postData);
+
+        // Start the transaction
+        if (!$this->pdo->inTransaction()) {
+            $this->pdo->beginTransaction();
+        }
+
+        try {
+
+            $newPostId = $this->postRepo->create($postData); // Call the repository method
+
+            if ($newPostId === null) {
+
+                $_SESSION['errors'] = ['Failed to upload thumbnail image or create post d.'];
+                $_SESSION['old'] = $body;
+                header('Location: /create-post');
+                exit();
+            }
+
+            $this->pdo->commit();
 
 
-        if ($newPostId === null) {
+            $postRow = $this->postRepo->fetchPostBySlug($validatedData['slug']);
 
-            $_SESSION['errors'] = ['Failed to upload thumbnail image.'];
+            if (!$postRow) {
+                // This is a critical error if it happens after a successful creation and commit
+                error_log("Critical error: Post with slug '{$validatedData['slug']}' was created (ID: $newPostId) but could not be retrieved.");
+                $_SESSION['errors'] = ['A critical error occurred after creating the post.'];
+                header('Location: /error'); // Redirect to a generic error page
+                exit();
+            }
+
+            $postId = $postRow['post_id'];
+            $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
+            $tagMap = $this->groupTagsByPostId($tagRows); // Assuming this helper exists
+            $tagsForThisPost = $tagMap[$postId] ?? [];
+
+            $newPost = new Post(
+                Uuid::fromString($postRow['post_id']),
+                Uuid::fromString($postRow['author_id']),
+                $postRow['author'],
+                $postRow['slug'],
+                $postRow['title'],
+                $postRow['text'],
+                $postRow['image_path'],
+                $tagsForThisPost,
+                new DateTimeImmutable($postRow['created_at'])
+            );
+
+            $_SESSION['success_message'] = 'Post created successfully!';
+            header('Location: /posts/' . $newPost->slug);
+            exit();
+        } catch (PDOException $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log("PDOException during post creation: " . $e->getMessage());
+            $_SESSION['errors'] = ['An error occurred while creating the post. Please try again.'];
             $_SESSION['old'] = $body;
             header('Location: /create-post');
             exit();
         }
-
-        $postRow = $this->postRepo->fetchPostBySlug($validatedData['slug']);
-
-        if ($postRow === false) {
-            $_SESSION['errors'] = ['Failed to retrieve created post.'];
-            header('Location: /create-post');
-            exit();
-        }
-
-        $postId = $postRow['post_id'];
-        $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
-        $tagMap = $this->groupTagsByPostId($tagRows);
-        $tagsForThisPost = $tagMap[$postId] ?? [];
-
-        $newPost = new Post(
-            Uuid::fromString($postRow['post_id']),
-            Uuid::fromString($postRow['author_id']),
-            $postRow['author'],
-            $postRow['slug'],
-            $postRow['title'],
-            $postRow['text'],
-            $postRow['image_path'], // thumbnail_image_path
-            $tagsForThisPost,
-            new DateTimeImmutable($postRow['created_at'])
-        );
-
-        $_SESSION['success_message'] = 'Post created successfully!';
-        header('Location: /posts/' . $newPost->slug);
-        exit();
     }
 
     private function validatePostForm(array $body, array $files): array
