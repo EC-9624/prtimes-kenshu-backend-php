@@ -34,7 +34,7 @@
                     <p>
                         Created by
                         <a
-                            href="/users/<?= htmlspecialchars($data->user_id) ?>"
+                            href="/users/<?= htmlspecialchars($data->user_name) ?>"
                             class="text-blue-400 hover:cursor-pointer hover:border-b">
                             <?= htmlspecialchars($data->user_name) ?>
                         </a>

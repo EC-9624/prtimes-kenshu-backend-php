@@ -150,6 +150,30 @@ class PostRepository implements PostRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function fetchPostByUserId(string $userId)
+    {
+        $sql =
+            "SELECT
+                p.post_id,
+                p.title,
+                p.slug,
+                u.user_name AS author,
+                u.user_id AS author_id,
+                i.image_path,
+                p.created_at
+            FROM posts p
+            JOIN users u ON p.user_id = u.user_id
+            LEFT JOIN images i ON p.thumbnail_image_id = i.image_id
+            WHERE p.user_id = :user_id
+            AND p.deleted_at IS NULL
+            ORDER BY p.created_at DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+        $stmt->execute();
+        return  $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     /**
      * @param string $postSlug The slug of the post to retrieve.
      * 
