@@ -7,15 +7,18 @@ require_once __DIR__ . '/../core/helper.php';
 use App\Core\Database;
 use App\Repositories\PostRepository;
 use App\Models\Post;
+use PDO;
 
 class HomeController
 {
     private PostRepository $postRepo;
+    private PDO $pdo;
 
     public function __construct()
     {
         $database = new Database();
-        $this->postRepo = new PostRepository($database);
+        $this->pdo = $database->getConnection();
+        $this->postRepo = new PostRepository($this->pdo);
     }
 
     /**

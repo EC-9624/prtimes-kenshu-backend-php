@@ -15,9 +15,9 @@ class PostRepository implements PostRepositoryInterface
     private PDO $pdo;
     private string $uploadFileSystemDirectory = __DIR__ . '/../../public/img/uploads/';
 
-    public function __construct(Database $database)
+    public function __construct(PDO $pdoConnection)
     {
-        $this->pdo = $database->getConnection();
+        $this->pdo = $pdoConnection;
     }
 
     /**
@@ -198,9 +198,11 @@ class PostRepository implements PostRepositoryInterface
      */
     public function create(array $data): ?string
     {
-        try {
-
+        if (!$this->pdo->inTransaction()) {
             $this->pdo->beginTransaction();
+        }
+
+        try {
 
             $postId = Uuid::uuid4()->toString();
             $imageId = null;

@@ -6,10 +6,20 @@ require_once __DIR__ . '/../core/helper.php';
 
 use App\Core\Database;
 use App\Repositories\UserRepository;
-use Exception;
+use PDOException;
+use PDO;
 
 class AuthController
 {
+    private UserRepository $userRepo;
+    private PDO $pdo;
+
+    public function __construct()
+    {
+        $database = new Database();
+        $this->pdo = $database->getConnection();
+        $this->userRepo = new UserRepository($this->pdo);
+    }
 
     public function showLoginForm()
     {
@@ -67,12 +77,8 @@ class AuthController
             return;
         }
 
-        // Save to database
-        $database = new Database();
-        $userRepo = new UserRepository($database);
-
         try {
-            $user = $userRepo->create(
+            $user = $this->userRepo->create(
                 $userName,
                 $email,
                 $password,
@@ -80,7 +86,7 @@ class AuthController
 
             header('Location: /login');
             exit;
-        } catch (Exception $e) {
+        } catch (PDOException $e) {
             render('auth/register', [
                 'title' => 'Register Page',
                 'errors' => ['Registration failed. Please try again. Error :' . $e->getMessage()],
@@ -118,11 +124,8 @@ class AuthController
             ]);
             return;
         }
-
-        $database = new Database();
-        $userRepo = new UserRepository($database);
         try {
-            $user = $userRepo->findByEmail($email);
+            $user = $this->userRepo->findByEmail($email);
 
             if ($user === null) {
                 $errors['credentials'] = 'Invalid credentials.';
@@ -155,7 +158,7 @@ class AuthController
 
             header('Location: /');
             exit;
-        } catch (Exception $e) {
+        } catch (PDOException $e) {
             error_log("PDO Error during login: " . $e->getMessage());
             render('auth/login', [
                 'title' => 'Login Page',

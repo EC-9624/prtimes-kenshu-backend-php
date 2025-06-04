@@ -9,15 +9,17 @@ use App\Models\Post;
 use App\Repositories\PostRepository;
 use Ramsey\Uuid\Uuid;
 use DateTimeImmutable;
+use PDO;
 
 class PostController
 {
     private PostRepository $postRepo;
-
+    private PDO $pdo;
     public function __construct()
     {
         $database = new Database();
-        $this->postRepo = new PostRepository($database);
+        $this->pdo = $database->getConnection();
+        $this->postRepo = new PostRepository($this->pdo);
     }
 
     // GET /posts/post_slug
@@ -93,6 +95,7 @@ class PostController
 
         $newPostId = $this->postRepo->create($postData);
 
+
         if ($newPostId === null) {
 
             $_SESSION['errors'] = ['Failed to upload thumbnail image.'];
@@ -103,7 +106,7 @@ class PostController
 
         $postRow = $this->postRepo->fetchPostBySlug($validatedData['slug']);
 
-        if (!is_array($postRow) && count($postRow) === 0) {
+        if ($postRow === false) {
             $_SESSION['errors'] = ['Failed to retrieve created post.'];
             header('Location: /create-post');
             exit();
