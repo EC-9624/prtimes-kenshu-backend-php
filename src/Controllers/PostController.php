@@ -150,7 +150,7 @@ class PostController
                 $this->pdo->rollBack();
             }
             error_log("PDOException during post creation: " . $e->getMessage());
-            $_SESSION['errors'] = ['An error occurred while creating the post. Please try again.'];
+            $_SESSION['errors'] = ['An error occurred while creating the post.' . $e->getMessage()];
             $_SESSION['old'] = $body;
             header('Location: /create-post');
             exit();
