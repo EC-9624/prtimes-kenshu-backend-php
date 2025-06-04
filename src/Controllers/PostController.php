@@ -191,7 +191,9 @@ class PostController
         $tagMap = $this->groupTagsByPostId($tagRows);
         $tagsForThisPost = $tagMap[$postId] ?? [];
         echo '<pre>';
-        print_r('$_SESSION userId: ' . $_SESSION['user_id']);
+        if (!isset($_SESSION)) {
+            print_r('$_SESSION userId: ' . $_SESSION['user_id']);
+        }
         echo '<br>';
         print_r('$postRow userId: ' . $postRow['author_id']);
         echo '</pre>';

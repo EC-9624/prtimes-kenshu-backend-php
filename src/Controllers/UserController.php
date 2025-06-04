@@ -43,7 +43,9 @@ class UserController
         }
 
         echo '<pre>';
-        print_r('$_SESSION userId: ' . $_SESSION['user_id']);
+        if (!isset($_SESSION)) {
+            print_r('$_SESSION userId: ' . $_SESSION['user_id']);
+        }
         echo '<br>';
         print_r('post userId: ' . $user->getUserId()->toString());
         echo '</pre>';
