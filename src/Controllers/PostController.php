@@ -71,6 +71,7 @@ class PostController
     // POST /create-post
     public function createPost($body): void
     {
+
         if (!isset($_SESSION['user_id'])) {
             $_SESSION['errors'] = ['Please log in to create a post.'];
             header('Location: /login');
@@ -157,6 +158,69 @@ class PostController
         }
     }
 
+
+    /**
+     * Group tag rows by post ID.
+     *
+     * @param array $tagRows
+     * @return array
+     */
+    private function groupTagsByPostId(array $tagRows): array
+    {
+        $tagMap = [];
+        foreach ($tagRows as $tag) {
+            $pid = $tag['post_id'];
+            if (!isset($tagMap[$pid])) {
+                $tagMap[$pid] = [];
+            }
+            $tagMap[$pid][] = [
+                'name' => $tag['name'],
+                'slug' => $tag['slug'],
+            ];
+        }
+        return $tagMap;
+    }
+
+    // GET /posts/post_slug/edit
+    public function showEditPost(string $slug): void
+    {
+
+        $postRow = $this->postRepo->fetchPostBySlug($slug);
+        $postId = $postRow['post_id'];
+        $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
+        $tagMap = $this->groupTagsByPostId($tagRows);
+        $tagsForThisPost = $tagMap[$postId] ?? [];
+        echo '<pre>';
+        print_r('$_SESSION userId: ' . $_SESSION['user_id']);
+        echo '<br>';
+        print_r('$postRow userId: ' . $postRow['author_id']);
+        echo '</pre>';
+        // die;
+
+        // TODO: implement edit post form
+        render('post/edit', [
+            'title' => 'Edit Post Page',
+            'post' => $postRow,
+            'tags' => $tagsForThisPost
+
+        ]);
+    }
+
+    // PATCH /posts/post_slug/edit
+    public function editPost()
+    {
+        // TODO: implement patch update logic
+        echo 'editPost called';
+    }
+
+    // DELETE /posts/post_id/delete
+    public function deletePost(string $post_id)
+    {
+        // TODO: delete post logic
+        echo 'deletePost called';
+    }
+
+
     private function validatePostForm(array $body, array $files): ValidatedFormDTO
     {
         $errors = [];
@@ -212,49 +276,5 @@ class PostController
             tagSlugs: $tagSlugs,
             thumbnailFileData: $thumbnailFileData
         );
-    }
-
-
-    // GET /posts/post_slug/edit
-    public function showEditPost()
-    {
-        // TODO: implement edit post form
-        echo 'showEditPost called';
-    }
-
-    // PATCH /posts/post_slug/edit
-    public function editPost()
-    {
-        // TODO: implement patch update logic
-        echo 'editPost called';
-    }
-
-    // DELETE /posts/post_id/delete
-    public function deletePost(string $post_id)
-    {
-        // TODO: delete post logic
-        echo 'deletePost called';
-    }
-
-    /**
-     * Group tag rows by post ID.
-     *
-     * @param array $tagRows
-     * @return array
-     */
-    private function groupTagsByPostId(array $tagRows): array
-    {
-        $tagMap = [];
-        foreach ($tagRows as $tag) {
-            $pid = $tag['post_id'];
-            if (!isset($tagMap[$pid])) {
-                $tagMap[$pid] = [];
-            }
-            $tagMap[$pid][] = [
-                'name' => $tag['name'],
-                'slug' => $tag['slug'],
-            ];
-        }
-        return $tagMap;
     }
 }

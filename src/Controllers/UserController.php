@@ -42,6 +42,13 @@ class UserController
             return;
         }
 
+        echo '<pre>';
+        print_r('$_SESSION userId: ' . $_SESSION['user_id']);
+        echo '<br>';
+        print_r('post userId: ' . $user->getUserId()->toString());
+        echo '</pre>';
+        // die;
+
         $userId = $user->getUserId()->toString();
 
         $posts = $this->postRepo->fetchPostsByUserId($userId);
