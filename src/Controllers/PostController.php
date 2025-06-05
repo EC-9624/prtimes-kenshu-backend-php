@@ -158,29 +158,6 @@ class PostController
         }
     }
 
-
-    /**
-     * Group tag rows by post ID.
-     *
-     * @param array $tagRows
-     * @return array
-     */
-    private function groupTagsByPostId(array $tagRows): array
-    {
-        $tagMap = [];
-        foreach ($tagRows as $tag) {
-            $pid = $tag['post_id'];
-            if (!isset($tagMap[$pid])) {
-                $tagMap[$pid] = [];
-            }
-            $tagMap[$pid][] = [
-                'name' => $tag['name'],
-                'slug' => $tag['slug'],
-            ];
-        }
-        return $tagMap;
-    }
-
     // GET /posts/post_slug/edit
     public function showEditPost(string $slug): void
     {
@@ -222,6 +199,27 @@ class PostController
         echo 'deletePost called';
     }
 
+    /**
+     * Group tag rows by post ID.
+     *
+     * @param array $tagRows
+     * @return array
+     */
+    private function groupTagsByPostId(array $tagRows): array
+    {
+        $tagMap = [];
+        foreach ($tagRows as $tag) {
+            $pid = $tag['post_id'];
+            if (!isset($tagMap[$pid])) {
+                $tagMap[$pid] = [];
+            }
+            $tagMap[$pid][] = [
+                'name' => $tag['name'],
+                'slug' => $tag['slug'],
+            ];
+        }
+        return $tagMap;
+    }
 
     private function validatePostForm(array $body, array $files): ValidatedFormDTO
     {
