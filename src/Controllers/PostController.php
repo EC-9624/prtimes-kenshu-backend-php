@@ -5,12 +5,16 @@ namespace App\Controllers;
 require_once __DIR__ . '/../core/helper.php';
 
 use App\Core\Database;
+use App\DTO\CreatePostDTO;
+use App\DTO\ValidatedFormDTO;
+use App\Exceptions\CreateFailedException;
+use App\Exceptions\GetFailedException;
 use App\Models\Post;
 use App\Repositories\PostRepository;
-use Ramsey\Uuid\Uuid;
 use DateTimeImmutable;
 use PDO;
 use PDOException;
+use Ramsey\Uuid\Uuid;
 
 class PostController
 {
@@ -69,93 +73,87 @@ class PostController
     {
         if (!isset($_SESSION['user_id'])) {
             $_SESSION['errors'] = ['Please log in to create a post.'];
-            header("Location: '/login'");
+            header('Location: /login');
             exit();
         }
 
         $userId = $_SESSION['user_id'];
         $validatedData = $this->validatePostForm($body, $_FILES);
 
-        if (!empty($validatedData['errors'])) {
+
+        if ($validatedData->hasErrors()) {
             $_SESSION['errors'] = $validatedData['errors'];
             $_SESSION['old'] = $body;
             header('Location: /create-post');
             exit();
         }
 
-        $postData = [
-            'user_id'             => $userId,
-            'title'               => $validatedData['title'],
-            'slug'                => $validatedData['slug'],
-            'text'                => $validatedData['text'],
-            'thumbnail_file_data' => $validatedData['thumbnailFileData'],
-            'alt_text'            => $validatedData['alt_text'],
-            'tag_slugs'           => $validatedData['tag_slugs'],
-        ];
+        $dto = new CreatePostDTO(
+            userId: $userId,
+            title: $validatedData->title,
+            slug: $validatedData->slug,
+            text: $validatedData->text,
+            thumbnailFileData: $validatedData->thumbnailFileData,
+            altText: $validatedData->altText,
+            tagSlugs: $validatedData->tagSlugs
+        );
 
-
-        // Start the transaction
         if (!$this->pdo->inTransaction()) {
             $this->pdo->beginTransaction();
         }
 
         try {
+            $this->postRepo->create($dto);
+            $this->pdo->commit();
 
-            $newPostId = $this->postRepo->create($postData); // Call the repository method
+            $postRow = $this->postRepo->fetchPostBySlug($validatedData->slug);
 
-            if ($newPostId === null) {
-
-                $_SESSION['errors'] = ['Failed to upload thumbnail image or create post d.'];
-                $_SESSION['old'] = $body;
-                header('Location: /create-post');
-                exit();
+            if (!$postRow) {
+                throw new GetFailedException("Post was created but could not be retrieved by slug '{$validatedData['slug']}'");
             }
 
-            $this->pdo->commit();
+            $postId = $postRow['post_id'];
+            $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
+            $tagMap = $this->groupTagsByPostId($tagRows);
+            $tagsForThisPost = $tagMap[$postId] ?? [];
+
+            $newPost = new Post(
+                Uuid::fromString($postRow['post_id']),
+                Uuid::fromString($postRow['author_id']),
+                $postRow['author'],
+                $postRow['slug'],
+                $postRow['title'],
+                $postRow['text'],
+                $postRow['image_path'],
+                $tagsForThisPost,
+                new DateTimeImmutable($postRow['created_at'])
+            );
+
+            $_SESSION['success_message'] = 'Post created successfully!';
+            header('Location: /posts/' . $newPost->slug);
+            exit();
         } catch (PDOException $e) {
 
             $this->pdo->rollBack();
-            error_log("PDOException during post creation: " . $e->getMessage());
-            $_SESSION['errors'] = ['An error occurred while creating the post.' . $e->getMessage()];
+            error_log("PDOException: " . $e->getMessage());
+            throw new CreateFailedException("Failed to create post: " . $e->getMessage(), 0, $e);
+        } catch (GetFailedException $e) {
+
+            error_log("GetFailedException: " . $e->getMessage());
+            $_SESSION['errors'] = ['An error occurred after creating the post.'];
+            header('Location: /create-post');
+            exit();
+        } catch (CreateFailedException $e) {
+
+            error_log("CreateFailedException: " . $e->getMessage());
+            $_SESSION['errors'] = ['An error occurred while creating the post.'];
             $_SESSION['old'] = $body;
             header('Location: /create-post');
             exit();
         }
-
-
-        $postRow = $this->postRepo->fetchPostsByIdsRaw([$newPostId]);
-
-        if (!$postRow) {
-            // This is a critical error if it happens after a successful creation and commit
-            error_log("Critical error: Post with slug '{$validatedData['slug']}' was created (ID: $newPostId) but could not be retrieved.");
-            $_SESSION['errors'] = ['A critical error occurred after creating the post.'];
-            header('Location: /error'); // Redirect to a generic error page
-            exit();
-        }
-
-        $postId = $postRow['post_id'];
-        $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
-        $tagMap = $this->groupTagsByPostId($tagRows); // Assuming this helper exists
-        $tagsForThisPost = $tagMap[$postId] ?? [];
-
-        $newPost = new Post(
-            Uuid::fromString($postRow[0]['post_id']),
-            Uuid::fromString($postRow[0]['author_id']),
-            $postRow[0]['author'],
-            $postRow[0]['slug'],
-            $postRow[0]['title'],
-            $postRow[0]['text'],
-            $postRow[0]['image_path'],
-            $tagsForThisPost,
-            new DateTimeImmutable($postRow[0]['created_at'])
-        );
-
-        $_SESSION['success_message'] = 'Post created successfully!';
-        header('Location: /posts/' . $newPost->slug);
-        exit();
     }
 
-    private function validatePostForm(array $body, array $files): array
+    private function validatePostForm(array $body, array $files): ValidatedFormDTO
     {
         $errors = [];
 
@@ -201,15 +199,15 @@ class PostController
             $errors[] = 'Alt text must be 255 characters or fewer.';
         }
 
-        return [
-            'errors' => $errors,
-            'title' => $title,
-            'slug' => $slug,
-            'text' => $text,
-            'alt_text' => $altText,
-            'tag_slugs' => $tagSlugs,
-            'thumbnailFileData' => $thumbnailFileData,
-        ];
+        return new ValidatedFormDTO(
+            errors: $errors,
+            title: $title,
+            slug: $slug,
+            text: $text,
+            altText: $altText,
+            tagSlugs: $tagSlugs,
+            thumbnailFileData: $thumbnailFileData
+        );
     }
 
 

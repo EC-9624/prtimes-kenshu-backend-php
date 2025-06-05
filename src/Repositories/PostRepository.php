@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Repositories\Interfaces\PostRepositoryInterface;
+use App\DTO\CreatePostDTO;
 use PDOException;
 use PDO;
 use RuntimeException;
@@ -183,7 +184,7 @@ class PostRepository implements PostRepositoryInterface
     /**
      * Create a new post, optional thumbnail image, and optional tags.
      *
-     * @param array{
+     * @param CreatePostDTO{
      * user_id: string,
      * title: string,
      * slug: string,
@@ -196,82 +197,66 @@ class PostRepository implements PostRepositoryInterface
      *
      * @throws PDOException If a database operation fails.
      */
-    public function create(array $data): ?string
+    public function create(CreatePostDTO $data): void
     {
-
         $postId = Uuid::uuid4()->toString();
         $imageId = null;
         $imagePath = null;
 
-        // --- Handle File Upload and insert image first ---
+        // Handle File Upload and insert image first
         if (
-            array_key_exists('thumbnail_file_data', $data)
-            && is_array($data['thumbnail_file_data'])
-            && isset($data['thumbnail_file_data']['tmp_name'])
-            && $data['thumbnail_file_data']['error'] === UPLOAD_ERR_OK
-            && !empty($data['thumbnail_file_data']['tmp_name'])
+            is_array($data->thumbnailFileData) &&
+            isset($data->thumbnailFileData['tmp_name']) &&
+            $data->thumbnailFileData['error'] === UPLOAD_ERR_OK &&
+            !empty($data->thumbnailFileData['tmp_name'])
         ) {
-            $uploadResult = $this->handleFileUpload($data['thumbnail_file_data']);
+            $uploadResult = $this->handleFileUpload($data->thumbnailFileData);
 
             if (!$uploadResult) {
                 $this->pdo->rollBack();
-                return null;
+                return;
             }
 
             $imageId = $uploadResult['image_id'];
             $imagePath = $uploadResult['image_path'];
 
-            // Insert image BEFORE the post
             $imageSql = "
-            INSERT INTO images
-              (image_id, image_path, alt_text, created_at)
-            VALUES
-              (:image_id, :image_path, :alt_text, NOW())
+            INSERT INTO images (image_id, image_path, alt_text, created_at)
+            VALUES (:image_id, :image_path, :alt_text, NOW())
         ";
             $imageStmt = $this->pdo->prepare($imageSql);
             $imageStmt->execute([
-                ':image_id'   => $imageId,
+                ':image_id' => $imageId,
                 ':image_path' => $imagePath,
-                ':alt_text'   => $data['alt_text'] ?? null,
+                ':alt_text' => $data->altText,
             ]);
         }
 
-        // --- Insert Post (with thumbnail_image_id if present) ---
         $postSql = "
-        INSERT INTO posts
-          (post_id, user_id, title, slug, text, thumbnail_image_id, created_at)
-        VALUES
-          (:post_id, :user_id, :title, :slug, :text, :thumbnail_image_id, NOW())
+        INSERT INTO posts (post_id, user_id, title, slug, text, thumbnail_image_id, created_at)
+        VALUES (:post_id, :user_id, :title, :slug, :text, :thumbnail_image_id, NOW())
     ";
         $postStmt = $this->pdo->prepare($postSql);
         $postStmt->execute([
-            ':post_id'            => $postId,
-            ':user_id'            => $data['user_id'],
-            ':title'              => $data['title'],
-            ':slug'               => $data['slug'],
-            ':text'               => $data['text'],
+            ':post_id' => $postId,
+            ':user_id' => $data->userId,
+            ':title' => $data->title,
+            ':slug' => $data->slug,
+            ':text' => $data->text,
             ':thumbnail_image_id' => $imageId,
         ]);
 
-        // --- Insert tag relations if present ---
-        if (
-            array_key_exists('tag_slugs', $data)
-            && is_array($data['tag_slugs'])
-            && count($data['tag_slugs']) > 0
-        ) {
-            $tagSlugs = $data['tag_slugs'];
-            $placeholders = implode(',', array_fill(0, count($tagSlugs), '?'));
+        if (!empty($data->tagSlugs)) {
+            $placeholders = implode(',', array_fill(0, count($data->tagSlugs), '?'));
 
             $tagFetchSql = "
-            SELECT tag_id
-            FROM tags
-            WHERE slug IN ($placeholders)
+            SELECT tag_id FROM tags WHERE slug IN ($placeholders)
         ";
             $tagFetchStmt = $this->pdo->prepare($tagFetchSql);
-            $tagFetchStmt->execute($tagSlugs);
+            $tagFetchStmt->execute($data->tagSlugs);
             $foundTags = $tagFetchStmt->fetchAll(PDO::FETCH_COLUMN);
 
-            if (is_array($foundTags) && count($foundTags) > 0) {
+            if (!empty($foundTags)) {
                 $tagInsertSql = "
                 INSERT INTO post_tags (post_id, tag_id, created_at)
                 VALUES (:post_id, :tag_id, NOW())
@@ -280,28 +265,23 @@ class PostRepository implements PostRepositoryInterface
                 foreach ($foundTags as $tagId) {
                     $tagInsertStmt->execute([
                         ':post_id' => $postId,
-                        ':tag_id'  => $tagId,
+                        ':tag_id' => $tagId,
                     ]);
                 }
             }
         }
-        // Update post to reference thumbnail_image_id
+
         if ($imageId !== null) {
             $updateImageSql = "
-                    UPDATE images
-                    SET post_id = :post_id
-                    WHERE image_id = :image_id
-                ";
+            UPDATE images SET post_id = :post_id WHERE image_id = :image_id
+        ";
             $updateImageStmt = $this->pdo->prepare($updateImageSql);
             $updateImageStmt->execute([
                 ':post_id' => $postId,
                 ':image_id' => $imageId,
             ]);
         }
-
-        return $postId;
     }
-
 
     private function handleFileUpload(array $uploadedFile): ?array
     {
