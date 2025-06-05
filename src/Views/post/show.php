@@ -41,7 +41,7 @@
                     </p>
                     <div>
                         Published on
-                        <time><?= $data->created_at->format('Y-m-d') ?></time>
+                        <time><?= $data->created_at->format('F j, Y, g:i a') ?></time>
                     </div>
                 </div>
                 <!-- Tags -->

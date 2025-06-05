@@ -26,7 +26,7 @@
                         </a>
                     </p>
                     <div class="">
-                        Published on <time><?= $post->created_at->format('Y-m-d') ?></time>
+                        Published on <time><?= $post->created_at->format('F j, Y, g:i a') ?></time>
                     </div>
                 </div>
                 <div class="mt-2 flex flex-wrap gap-2">

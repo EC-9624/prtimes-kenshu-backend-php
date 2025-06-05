@@ -43,13 +43,16 @@ class UserController
         }
 
         echo '<pre>';
-        if (!isset($_SESSION)) {
-            print_r('$_SESSION userId: ' . $_SESSION['user_id']);
+
+        if (isset($_SESSION['user_id'])) {
+            print_r(count($_SESSION['user_id']));
+        } else {
+            print_r('user_id not set in session.');
         }
         echo '<br>';
         print_r('post userId: ' . $user->getUserId()->toString());
         echo '</pre>';
-        // die;
+
 
         $userId = $user->getUserId()->toString();
 
