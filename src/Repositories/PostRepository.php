@@ -14,11 +14,14 @@ use Ramsey\Uuid\Uuid;
 class PostRepository implements PostRepositoryInterface
 {
     private PDO $pdo;
-    private string $uploadFileSystemDirectory = __DIR__ . '/../../public/img/uploads/';
+    private string $uploadFileSystemDirectory;
 
     public function __construct(PDO $pdoConnection)
     {
         $this->pdo = $pdoConnection;
+        $path =  realpath(__DIR__ . '/../../public/img/uploads/');
+
+        $this->uploadFileSystemDirectory = $path;
     }
 
     /**
@@ -223,6 +226,7 @@ class PostRepository implements PostRepositoryInterface
      */
     public function create(CreatePostDTO $data): void
     {
+        // TODO : modify create to be able to upload multiple images 
         $postId = Uuid::uuid4()->toString();
         $imageId = null;
         $imagePath = null;
@@ -307,6 +311,13 @@ class PostRepository implements PostRepositoryInterface
         }
     }
 
+    public function update(CreatePostDTO $data)
+    {
+        // update data only Body and title
+    }
+
+    public function delete(string $postId) {}
+
     private function handleFileUpload(array $uploadedFile): ?array
     {
         // Validate file type
@@ -337,4 +348,6 @@ class PostRepository implements PostRepositoryInterface
             'image_path' => '/img/uploads/' . $newFileName,
         ];
     }
+
+    private function handleFileDeletion() {}
 }

@@ -20,9 +20,9 @@
         </div>
     <?php endif; ?>
 
-    <form action="/posts/<?= htmlspecialchars($post['slug']) ?>/edit" method="PUT" class="space-y-6" enctype="multipart/form-data">
+    <form action="/posts/<?= htmlspecialchars($post['slug']) ?>/edit" method="POST" class="space-y-6">
+        <input type="hidden" name="_method" value="PATCH">
         <input type="hidden" name="post_id" value="<?= htmlspecialchars($post['post_id']) ?>">
-
         <div>
             <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Post Title:</label>
             <input
@@ -31,16 +31,6 @@
                 name="title"
                 value="<?= htmlspecialchars($old['title'] ?? $post['title']) ?>"
                 placeholder="My First Post"
-                class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-        </div>
-
-        <div>
-            <label for="slug" class="block text-sm font-medium text-gray-700 mb-1">Post URL:</label>
-            <input
-                type="text"
-                id="slug"
-                name="slug"
-                value="<?= htmlspecialchars($old['slug'] ?? $post['slug']) ?>"
                 class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
         </div>
 
@@ -54,30 +44,6 @@
                 class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"><?= htmlspecialchars($old['text'] ?? $post['text']) ?></textarea>
         </div>
 
-        <div>
-            <label for="thumbnail_image" class="block text-sm font-medium text-gray-700 mb-1">Thumbnail Image:</label>
-            <input
-                type="file"
-                id="thumbnail_image"
-                name="thumbnail_image"
-                accept="image/jpeg, image/png, image/gif, image/webp"
-                class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-            <?php if (!empty($post['image_path'])): ?>
-                <p class="text-sm mt-2">Current Image: <img src="<?= htmlspecialchars($post['image_path']) ?>" alt="" class="h-24 mt-1 rounded"></p>
-            <?php endif; ?>
-            <p class="text-xs text-gray-500 mt-1">Accepted formats: JPG, PNG, GIF, WebP</p>
-        </div>
-
-        <div>
-            <label for="alt_text" class="block text-sm font-medium text-gray-700 mb-1">Image Alt Text (for accessibility):</label>
-            <input
-                type="text"
-                id="alt_text"
-                name="alt_text"
-                value="<?= htmlspecialchars($old['alt_text'] ?? '') ?>"
-                placeholder="A descriptive text for the image"
-                class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-        </div>
 
         <?php
         $oldTagSlugs = $old['tag_slugs'] ?? array_column($tags, 'slug');

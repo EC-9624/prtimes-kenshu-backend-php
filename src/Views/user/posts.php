@@ -18,9 +18,16 @@
                     <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] === $post['author_id']): ?>
                         <div class="flex gap-2">
                             <a href="/posts/<?= $post['slug'] ?>/edit" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md">Edit</a>
-                            <a href="/posts/<?= $post['slug'] ?>/delete" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">Delete</a>
+
+                            <form action="/posts/<?= $post['slug'] ?>/delete" method="POST"
+                                class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
+                                onsubmit="return confirm('Are you sure you want to delete this post?');">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit">Delete</button>
+                            </form>
                         </div>
                     <?php endif; ?>
+
                 </div>
 
             <?php endforeach; ?>

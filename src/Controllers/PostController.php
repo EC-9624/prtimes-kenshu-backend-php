@@ -69,9 +69,9 @@ class PostController
     }
 
     // POST /create-post
+    // TODO : modify createPost to be able to upload multiple images 
     public function createPost($body): void
     {
-
         if (!isset($_SESSION['user_id'])) {
             $_SESSION['errors'] = ['Please log in to create a post.'];
             header('Location: /login');
@@ -158,7 +158,7 @@ class PostController
         }
     }
 
-    // GET /posts/post_slug/edit
+    // GET /posts/post_slug/edit 
     public function showEditPost(string $slug): void
     {
 
@@ -187,16 +187,22 @@ class PostController
     }
 
     // PATCH /posts/post_slug/edit
-    public function editPost()
+    public function editPost($slug, $body)
     {
-        // TODO: implement patch update logic
-        echo 'editPost called';
+        // TODO: implement patch update logic only Title and Body
+        echo '<pre>';
+        var_dump($slug);
+        var_dump($body);
+        echo '</pre>';
+        echo '<br>';
+        echo 'editPost Called';
     }
 
     // DELETE /posts/post_id/delete
     public function deletePost(string $post_id)
     {
         // TODO: delete post logic
+        echo $post_id;
         echo 'deletePost called';
     }
 
