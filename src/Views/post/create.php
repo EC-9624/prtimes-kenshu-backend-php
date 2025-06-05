@@ -1,7 +1,7 @@
 <?php require(VIEW_PATH . 'partials/head.php') ?>
 <div class="max-w-3xl my-4 mx-auto">
     <h1 class="text-2xl font-semibold mb-4">Create New Post</h1>
-    <?php if (isset($errors)): ?>
+    <?php if (count($errors) !== 0): ?>
         <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
             <ul class="list-disc pl-5 space-y-1">
                 <?php foreach ($errors as $error): ?>

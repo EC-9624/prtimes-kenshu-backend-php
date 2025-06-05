@@ -112,38 +112,6 @@ class PostController
             }
 
             $this->pdo->commit();
-
-
-            $postRow = $this->postRepo->fetchPostBySlug($validatedData['slug']);
-
-            if (!$postRow) {
-                // This is a critical error if it happens after a successful creation and commit
-                error_log("Critical error: Post with slug '{$validatedData['slug']}' was created (ID: $newPostId) but could not be retrieved.");
-                $_SESSION['errors'] = ['A critical error occurred after creating the post.'];
-                header('Location: /error'); // Redirect to a generic error page
-                exit();
-            }
-
-            $postId = $postRow['post_id'];
-            $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
-            $tagMap = $this->groupTagsByPostId($tagRows); // Assuming this helper exists
-            $tagsForThisPost = $tagMap[$postId] ?? [];
-
-            $newPost = new Post(
-                Uuid::fromString($postRow['post_id']),
-                Uuid::fromString($postRow['author_id']),
-                $postRow['author'],
-                $postRow['slug'],
-                $postRow['title'],
-                $postRow['text'],
-                $postRow['image_path'],
-                $tagsForThisPost,
-                new DateTimeImmutable($postRow['created_at'])
-            );
-
-            $_SESSION['success_message'] = 'Post created successfully!';
-            header('Location: /posts/' . $newPost->slug);
-            exit();
         } catch (PDOException $e) {
 
             $this->pdo->rollBack();
@@ -153,6 +121,38 @@ class PostController
             header('Location: /create-post');
             exit();
         }
+
+
+        $postRow = $this->postRepo->fetchPostsByIdsRaw([$newPostId]);
+
+        if (!$postRow) {
+            // This is a critical error if it happens after a successful creation and commit
+            error_log("Critical error: Post with slug '{$validatedData['slug']}' was created (ID: $newPostId) but could not be retrieved.");
+            $_SESSION['errors'] = ['A critical error occurred after creating the post.'];
+            header('Location: /error'); // Redirect to a generic error page
+            exit();
+        }
+
+        $postId = $postRow['post_id'];
+        $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
+        $tagMap = $this->groupTagsByPostId($tagRows); // Assuming this helper exists
+        $tagsForThisPost = $tagMap[$postId] ?? [];
+
+        $newPost = new Post(
+            Uuid::fromString($postRow[0]['post_id']),
+            Uuid::fromString($postRow[0]['author_id']),
+            $postRow[0]['author'],
+            $postRow[0]['slug'],
+            $postRow[0]['title'],
+            $postRow[0]['text'],
+            $postRow[0]['image_path'],
+            $tagsForThisPost,
+            new DateTimeImmutable($postRow[0]['created_at'])
+        );
+
+        $_SESSION['success_message'] = 'Post created successfully!';
+        header('Location: /posts/' . $newPost->slug);
+        exit();
     }
 
     private function validatePostForm(array $body, array $files): array
