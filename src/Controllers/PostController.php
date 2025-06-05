@@ -7,8 +7,8 @@ require_once __DIR__ . '/../core/helper.php';
 use App\Core\Database;
 use App\DTO\CreatePostDTO;
 use App\DTO\ValidatedFormDTO;
-use App\Exceptions\CreateFailedException;
-use App\Exceptions\GetFailedException;
+use App\Exceptions\PostCreationException;
+use App\Exceptions\PostRetrievalException;
 use App\Models\Post;
 use App\Repositories\PostRepository;
 use DateTimeImmutable;
@@ -109,7 +109,7 @@ class PostController
             $postRow = $this->postRepo->fetchPostBySlug($validatedData->slug);
 
             if (!$postRow) {
-                throw new GetFailedException("Post was created but could not be retrieved by slug '{$validatedData['slug']}'");
+                throw new PostRetrievalException("Post was created but could not be retrieved by slug '{$validatedData['slug']}'");
             }
 
             $postId = $postRow['post_id'];
@@ -136,17 +136,21 @@ class PostController
 
             $this->pdo->rollBack();
             error_log("PDOException: " . $e->getMessage());
-            throw new CreateFailedException("Failed to create post: " . $e->getMessage(), 0, $e);
-        } catch (GetFailedException $e) {
+            throw new PostCreationException("Failed to create post: " . $e->getMessage(), 0, $e);
+        } catch (PostRetrievalException $e) {
 
-            error_log("GetFailedException: " . $e->getMessage());
-            $_SESSION['errors'] = ['An error occurred after creating the post.'];
+            error_log("PostRetrievalException: " . $e->getMessage());
+            $_SESSION['errors'] = [
+                'Post retrieval failed after creation. : ' . $e->getMessage()
+            ];
             header('Location: /create-post');
             exit();
-        } catch (CreateFailedException $e) {
+        } catch (PostCreationException $e) {
 
-            error_log("CreateFailedException: " . $e->getMessage());
-            $_SESSION['errors'] = ['An error occurred while creating the post.'];
+            error_log("PostCreationException: " . $e->getMessage());
+            $_SESSION['errors'] = [
+                'Failed to create post: " : ' . $e->getMessage()
+            ];
             $_SESSION['old'] = $body;
             header('Location: /create-post');
             exit();

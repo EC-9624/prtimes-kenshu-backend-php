@@ -50,7 +50,7 @@ class HomeController
      *
      * @param string $category  The tag slug (e.g. "technology" or "mobile").
      */
-    public function showCategory(string $category)
+    public function showCategory(string $category): void
     {
         $postIds = $this->postRepo->fetchPostIdsByTag($category);
         if (count($postIds) === 0) {
