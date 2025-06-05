@@ -16,8 +16,7 @@ class HomeController
 
     public function __construct()
     {
-        $database = new Database();
-        $this->pdo = $database->getConnection();
+        $this->pdo = Database::getConnection();
         $this->postRepo = new PostRepository($this->pdo);
     }
 

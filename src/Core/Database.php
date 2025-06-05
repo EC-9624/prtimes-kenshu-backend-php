@@ -7,19 +7,11 @@ use PDOException;
 
 class Database
 {
-    protected ?PDO $pdo = null;
-    protected string $host;
-    protected string $dbname;
-    protected string $user;
-    protected string $password;
-
-    public function __construct()
-    {
-        $this->host = getenv('DATABASE_HOST');
-        $this->dbname = getenv('DATABASE_NAME');
-        $this->user = getenv('DATABASE_USER');
-        $this->password = getenv('DATABASE_PASSWORD');
-    }
+    private static ?PDO $pdo = null;
+    private static string $host;
+    private static string $dbname;
+    private static string $user;
+    private static string $password;
 
     /**
      * Get the PDO instance.
@@ -27,20 +19,26 @@ class Database
      *
      * @return PDO
      */
-    public function getConnection(): PDO
+    public static function getConnection(): PDO
     {
         // Only establish connection if it hasn't been established yet
-        if ($this->pdo === null) {
-            $dsn = "pgsql:host=$this->host;port=5432;dbname=$this->dbname";
+        if (self::$pdo === null) {
+            // Initialize static properties when getConnection is first called
+            self::$host = getenv('DATABASE_HOST');
+            self::$dbname = getenv('DATABASE_NAME');
+            self::$user = getenv('DATABASE_USER');
+            self::$password = getenv('DATABASE_PASSWORD');
+
+            $dsn = "pgsql:host=" . self::$host . ";port=5432;dbname=" . self::$dbname;
             try {
-                $this->pdo = new PDO($dsn, $this->user, $this->password);
-                $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+                self::$pdo = new PDO($dsn, self::$user, self::$password);
+                self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             } catch (PDOException $e) {
                 error_log("Database connection error: " . $e->getMessage());
                 throw new PDOException("Database connection failed", 0, $e);
             }
         }
-        return $this->pdo;
+        return self::$pdo;
     }
 }

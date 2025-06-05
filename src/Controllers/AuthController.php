@@ -16,8 +16,7 @@ class AuthController
 
     public function __construct()
     {
-        $database = new Database();
-        $this->pdo = $database->getConnection();
+        $this->pdo = Database::getConnection();
         $this->userRepo = new UserRepository($this->pdo);
     }
 

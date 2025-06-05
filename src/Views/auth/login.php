@@ -21,7 +21,7 @@
         </div>
 
         <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-            <?php if (!empty($_SESSION['errors'])): ?>
+            <?php if (isset($_SESSION['errors'])): ?>
                 <div class="mb-4 text-red-600">
                     <ul>
                         <?php foreach ($_SESSION['errors'] as $error): ?>

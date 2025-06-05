@@ -18,8 +18,7 @@ class PostController
     private PDO $pdo;
     public function __construct()
     {
-        $database = new Database();
-        $this->pdo = $database->getConnection();
+        $this->pdo = Database::getConnection();
         $this->postRepo = new PostRepository($this->pdo);
     }
 
@@ -146,9 +145,8 @@ class PostController
             header('Location: /posts/' . $newPost->slug);
             exit();
         } catch (PDOException $e) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
+
+            $this->pdo->rollBack();
             error_log("PDOException during post creation: " . $e->getMessage());
             $_SESSION['errors'] = ['An error occurred while creating the post.' . $e->getMessage()];
             $_SESSION['old'] = $body;
