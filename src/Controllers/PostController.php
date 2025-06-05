@@ -168,15 +168,16 @@ class PostController
         $tagMap = $this->groupTagsByPostId($tagRows);
         $tagsForThisPost = $tagMap[$postId] ?? [];
         echo '<pre>';
-        if (!isset($_SESSION)) {
-            print_r('$_SESSION userId: ' . $_SESSION['user_id']);
+
+        if (isset($_SESSION['user_id'])) {
+            print_r($_SESSION['user_id']);
+        } else {
+            print_r('user_id not set in session.');
         }
         echo '<br>';
         print_r('$postRow userId: ' . $postRow['author_id']);
         echo '</pre>';
-        // die;
 
-        // TODO: implement edit post form
         render('post/edit', [
             'title' => 'Edit Post Page',
             'post' => $postRow,

@@ -45,7 +45,7 @@ class UserController
         echo '<pre>';
 
         if (isset($_SESSION['user_id'])) {
-            print_r(count($_SESSION['user_id']));
+            print_r($_SESSION['user_id']);
         } else {
             print_r('user_id not set in session.');
         }
