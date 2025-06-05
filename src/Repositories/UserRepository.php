@@ -13,9 +13,9 @@ class UserRepository implements UserRepositoryInterface
 {
     private PDO $pdo;
 
-    public function __construct(Database $database)
+    public function __construct(PDO $pdoConnection)
     {
-        $this->pdo = $database->getConnection();
+        $this->pdo = $pdoConnection;
     }
 
     public function findById(UuidInterface $userId): ?User

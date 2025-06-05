@@ -56,6 +56,8 @@ ALTER TABLE "images" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id");
 -- Index on the foreign key in the posts table
 CREATE INDEX idx_posts_user_id ON posts (user_id);
 CREATE INDEX idx_posts_thumbnail_image_id ON posts (thumbnail_image_id);
+--Index for search
+CREATE INDEX idx_posts_slug ON posts (slug);
 
 -- Index on the foreign key in the post_tags table (for queries filtering only by tag_id)
 CREATE INDEX idx_post_tags_tag_id ON post_tags (tag_id);

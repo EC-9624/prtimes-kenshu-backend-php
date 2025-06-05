@@ -24,18 +24,18 @@ VALUES
 -- Insert posts
 INSERT INTO posts (post_id, user_id, title, slug, text, created_at)
 VALUES
-  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'Tech Trends 2025', 'tech-trends-2025', 'This post discusses tech trends in 2025...', NOW()),
-  ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'The Best Gourmet Spots', 'best-gourmet-spots', 'Explore gourmet food around Tokyo...', NOW());
+  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'Tech Trends 2025', 'tech-trends-2025', 'This post discusses tech trends in 2025... Lorem ipsum dolor sit amet consectetur adipisicing elit. Enim, esse! Quaerat dolorum eveniet soluta rem officia. Labore pariatur velit dolorum voluptatibus doloremque, ut accusantium aliquam molestias perferendis incidunt accusamus soluta.', NOW()),
+  ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'The Best Gourmet Spots', 'best-gourmet-spots', 'Explore gourmet food around Tokyo... Lorem ipsum dolor sit amet consectetur adipisicing elit. Enim, esse! Quaerat dolorum eveniet soluta rem officia. Labore pariatur velit dolorum voluptatibus doloremque, ut accusantium aliquam molestias perferendis incidunt accusamus soluta.', NOW());
 
 -- Insert images (thumbnails and inline)
 INSERT INTO images (image_id, post_id, image_path, alt_text)
 VALUES
   -- Thumbnail for post 1
-  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '/images/tech-thumb.jpg', 'Tech Thumbnail'),
+  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '/img/image-placeholder.svg', 'Tech Thumbnail'),
   -- Thumbnail for post 2
-  ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', '/images/gourmet-thumb.jpg', 'Gourmet Thumbnail'),
+  ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', '/img/image-placeholder.svg', 'Gourmet Thumbnail'),
   -- Inline image for post 1
-  ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '/images/tech-graph.jpg', 'Tech Growth Chart');
+  ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '/img/tech-graph.jpg', 'Tech Growth Chart');
 
 -- Link thumbnails to posts
 UPDATE posts SET thumbnail_image_id = '20000000-0000-0000-0000-000000000001' WHERE post_id = '10000000-0000-0000-0000-000000000001';

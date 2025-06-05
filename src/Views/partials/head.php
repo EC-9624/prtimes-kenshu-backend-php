@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="/js/tailwindcss.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
 
     <title><?= htmlspecialchars($title) ?></title>
 </head>
@@ -22,12 +22,17 @@
                         <div><span class="font-semibold">Email:</span> <?= htmlspecialchars($_SESSION['email']) ?></div>
                     </div>
                 </div>
+                <div class="flex gap-2">
+                    <a class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-md" href="/create-post">
+                        Post
+                    </a>
+                    <form action="/logout" method="GET">
+                        <button class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">
+                            Logout
+                        </button>
+                    </form>
+                </div>
 
-                <form action="/logout" method="GET">
-                    <button class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">
-                        Logout
-                    </button>
-                </form>
             <?php else: ?>
                 <a class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md" href="/login">
                     Login
@@ -35,6 +40,3 @@
             <?php endif; ?>
         </div>
     </header>
-</body>
-
-</html>
