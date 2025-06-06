@@ -363,7 +363,10 @@ class PostRepository implements PostRepositoryInterface
         }
     }
 
-
+    /**
+     * @param string $postId
+     * @return void
+     */
     public function delete(string $postId): void
     {
         // Soft delete
