@@ -336,7 +336,7 @@ class PostRepository implements PostRepositoryInterface
         ]);
 
         // Re-insert new tags if any
-        if (!empty($data['tag_slugs'])) {
+        if (isset($data['tag_slugs'])) {
             $placeholders = implode(',', array_fill(0, count($data['tag_slugs']), '?'));
 
             $fetchTagsSql = "SELECT tag_id FROM tags WHERE slug IN ($placeholders)";
@@ -345,7 +345,7 @@ class PostRepository implements PostRepositoryInterface
 
             $foundTagIds = $fetchTagsStmt->fetchAll(PDO::FETCH_COLUMN);
 
-            if (!empty($foundTagIds)) {
+            if (isset($foundTagIds)) {
                 $insertTagSql = "
                 INSERT INTO post_tags (post_id, tag_id, created_at)
                 VALUES (:post_id, :tag_id, NOW())
