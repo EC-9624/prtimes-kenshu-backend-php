@@ -311,13 +311,54 @@ class PostRepository implements PostRepositoryInterface
         }
     }
 
-    public function update(string $postId, array $data)
+    public function update(string $postId, array $data): void
     {
-        echo 'update block';
-        preDump($postId);
-        preDump($data);
+        // Update title and text
+        $updateSql = "
+        UPDATE posts
+        SET title = :title,
+            text = :text,
+            updated_at = NOW()
+        WHERE post_id = :post_id
+    ";
+        $updateStmt = $this->pdo->prepare($updateSql);
+        $updateStmt->execute([
+            ':title' => $data['title'],
+            ':text' => $data['body'],
+            ':post_id' => $postId,
+        ]);
 
-        // update data only Body and title
+        // Delete existing tags
+        $deleteTagsSql = "DELETE FROM post_tags WHERE post_id = :post_id";
+        $deleteTagsStmt = $this->pdo->prepare($deleteTagsSql);
+        $deleteTagsStmt->execute([
+            ':post_id' => $postId,
+        ]);
+
+        // Re-insert new tags if any
+        if (!empty($data['tag_slugs'])) {
+            $placeholders = implode(',', array_fill(0, count($data['tag_slugs']), '?'));
+
+            $fetchTagsSql = "SELECT tag_id FROM tags WHERE slug IN ($placeholders)";
+            $fetchTagsStmt = $this->pdo->prepare($fetchTagsSql);
+            $fetchTagsStmt->execute($data['tag_slugs']);
+
+            $foundTagIds = $fetchTagsStmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($foundTagIds)) {
+                $insertTagSql = "
+                INSERT INTO post_tags (post_id, tag_id, created_at)
+                VALUES (:post_id, :tag_id, NOW())
+            ";
+                $insertTagStmt = $this->pdo->prepare($insertTagSql);
+                foreach ($foundTagIds as $tagId) {
+                    $insertTagStmt->execute([
+                        ':post_id' => $postId,
+                        ':tag_id' => $tagId,
+                    ]);
+                }
+            }
+        }
     }
 
     public function delete(string $postId) {}

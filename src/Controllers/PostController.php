@@ -208,10 +208,9 @@ class PostController
             exit();
         }
 
-
         $errors = $this->validateBasicPostFields($body);
 
-        if (!empty($errors)) {
+        if (isset($error) && count($errors) > 0) {
             $_SESSION['errors'] = $errors;
             $_SESSION['old'] = $body;
             header("Location: /posts/{$slug}/edit");
@@ -220,17 +219,31 @@ class PostController
 
         $title = trim($body['title']);
         $content = trim($body['text']);
+        $tagSlugs = $body['tag_slugs'];
 
-        $this->postRepo->update($body['post_id'], [
-            'title' => $title,
-            'body' => $content,
-            'tag_slugs' => $body['tag_slugs']
-        ]);
+        if (!$this->pdo->inTransaction()) {
+            $this->pdo->beginTransaction();
+        }
 
-        // header("Location: /posts/{$slug}");
-        // exit();
+        try {
+
+            $this->postRepo->update($body['post_id'], [
+                'title' => $title,
+                'body' => $content,
+                'tag_slugs' => $tagSlugs
+            ]);
+            $this->pdo->commit();
+
+            header("Location: /posts/{$slug}");
+            exit();
+        } catch (PDOException $e) {
+            $this->pdo->rollBack();
+            error_log("PDOException: " . $e->getMessage());
+            $_SESSION['errors'] = [
+                'PDOException : ' . $e->getMessage()
+            ];
+        }
     }
-
 
     // DELETE /posts/post_id/delete
     public function deletePost(string $slug, array $body)
