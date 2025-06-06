@@ -153,7 +153,12 @@ class PostRepository implements PostRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function fetchPostsByUserId(string $userId)
+    /**
+     * fetch user's posts
+     * @param string $userId
+     * @return array|false
+     */
+    public function fetchPostsByUserId(string $userId): bool|array
     {
         $sql =
             "SELECT
@@ -216,13 +221,12 @@ class PostRepository implements PostRepositoryInterface
      * title: string,
      * slug: string,
      * text: string,
-     * thumbnail_file_data?: array<string, mixed>|null, 
+     * thumbnail_file_data?: array<string, mixed>|null,
      * alt_text?: string|null,
      * tag_slugs?: string[]|null
      * } $data
-     * @return string The ID of the newly created post, or null if file upload fails.
+     * @return void
      *
-     * @throws PDOException If a database operation fails.
      */
     public function create(CreatePostDTO $data): void
     {
@@ -233,10 +237,7 @@ class PostRepository implements PostRepositoryInterface
 
         // Handle File Upload and insert image first
         if (
-            is_array($data->thumbnailFileData) &&
-            isset($data->thumbnailFileData['tmp_name']) &&
-            $data->thumbnailFileData['error'] === UPLOAD_ERR_OK &&
-            isset($data->thumbnailFileData['tmp_name'])
+            isset($data->thumbnailFileData['tmp_name']) && is_array($data->thumbnailFileData) && $data->thumbnailFileData['error'] === UPLOAD_ERR_OK
         ) {
             $uploadResult = $this->handleFileUpload($data->thumbnailFileData);
 
@@ -311,6 +312,11 @@ class PostRepository implements PostRepositoryInterface
         }
     }
 
+    /**
+     * update title, text, tags of a post
+     * @param UpdatePostDTO $data
+     * @return void
+     */
     public function update(UpdatePostDTO $data): void
     {
         $updateSql = "
@@ -359,6 +365,10 @@ class PostRepository implements PostRepositoryInterface
 
     public function delete(string $postId) {}
 
+    /**
+     * @param array $uploadedFile
+     * @return array|null
+     */
     private function handleFileUpload(array $uploadedFile): ?array
     {
         // Validate file type

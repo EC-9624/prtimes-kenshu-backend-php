@@ -13,6 +13,7 @@ use App\Exceptions\PostRetrievalException;
 use App\Models\Post;
 use App\Repositories\PostRepository;
 use DateTimeImmutable;
+use Exception;
 use PDO;
 use PDOException;
 use Ramsey\Uuid\Uuid;
@@ -28,25 +29,16 @@ class PostController
     }
 
     // GET /posts/post_slug
-    public function showPost(string $post_slug)
+
+    /**
+     * @param string $post_slug
+     * @return void
+     * @throws Exception
+     */
+    public function showPost(string $post_slug): void
     {
         $postRow = $this->postRepo->fetchPostBySlug($post_slug);
-        $postId = $postRow['post_id'];
-        $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
-        $tagMap = $this->groupTagsByPostId($tagRows);
-        $tagsForThisPost = $tagMap[$postId] ?? [];
-
-        $post = new Post(
-            Uuid::fromString($postRow['post_id']),
-            Uuid::fromString($postRow['author_id']),
-            $postRow['author'],
-            $postRow['slug'],
-            $postRow['title'],
-            $postRow['text'],
-            $postRow['image_path'],
-            $tagsForThisPost,
-            new DateTimeImmutable($postRow['created_at'])
-        );
+        $post = $this->getPost($postRow);
 
         render('post/show', [
             'title' => 'Post Detail Page',
@@ -55,6 +47,10 @@ class PostController
     }
 
     // GET /create-post
+
+    /**
+     * @return void
+     */
     public function showCreatePost(): void
     {
         $errors = $_SESSION['errors'] ?? [];
@@ -70,7 +66,12 @@ class PostController
     }
 
     // POST /create-post
-    // TODO : modify createPost to be able to upload multiple images 
+    // TODO : modify createPost to be able to upload multiple images
+    /**
+     * @param $body
+     * @return void
+     * @throws Exception
+     */
     public function createPost($body): void
     {
 
@@ -115,22 +116,7 @@ class PostController
                 throw new PostRetrievalException("Post was created but could not be retrieved by slug '{$validatedData['slug']}'");
             }
 
-            $postId = $postRow['post_id'];
-            $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
-            $tagMap = $this->groupTagsByPostId($tagRows);
-            $tagsForThisPost = $tagMap[$postId] ?? [];
-
-            $newPost = new Post(
-                Uuid::fromString($postRow['post_id']),
-                Uuid::fromString($postRow['author_id']),
-                $postRow['author'],
-                $postRow['slug'],
-                $postRow['title'],
-                $postRow['text'],
-                $postRow['image_path'],
-                $tagsForThisPost,
-                new DateTimeImmutable($postRow['created_at'])
-            );
+            $newPost = $this->getPost($postRow);
 
             $_SESSION['success_message'] = 'Post created successfully!';
             header('Location: /posts/' . $newPost->slug);
@@ -160,7 +146,11 @@ class PostController
         }
     }
 
-    // GET /posts/post_slug/edit 
+    // GET /posts/post_slug/edit
+    /**
+     * @param string $slug
+     * @return void
+     */
     public function showEditPost(string $slug): void
     {
         $errors = $_SESSION['errors'] ?? [];
@@ -195,6 +185,12 @@ class PostController
 
 
     // PATCH /posts/post_slug/edit
+
+    /**
+     * @param string $slug
+     * @param array $body
+     * @return void
+     */
     public function editPost(string $slug, array $body): void
     {
         if (!isset($_SESSION['user_id'])) {
@@ -240,6 +236,12 @@ class PostController
     }
 
     // DELETE /posts/post_id/delete
+
+    /**
+     * @param string $slug
+     * @param array $body
+     * @return void
+     */
     public function deletePost(string $slug, array $body): void
     {
         // TODO: delete post logic
@@ -271,6 +273,11 @@ class PostController
         return $tagMap;
     }
 
+    /**
+     * helper function to  validate post title , text
+     * @param array $body
+     * @return array
+     */
     private function validateBasicPostFields(array $body): array
     {
         $errors = [];
@@ -289,6 +296,12 @@ class PostController
         return $errors;
     }
 
+    /**
+     * helper function to validate post form
+     * @param array $body
+     * @param array $files
+     * @return ValidatedFormDTO
+     */
     private function validatePostForm(array $body, array $files): ValidatedFormDTO
     {
 
@@ -338,6 +351,32 @@ class PostController
             altText: $altText,
             tagSlugs: $tagSlugs,
             thumbnailFileData: $thumbnailFileData
+        );
+    }
+
+    /**
+     * function to retrieve post detail
+     * @param array $postRow
+     * @return Post
+     * @throws Exception
+     */
+    public function getPost(array $postRow): Post
+    {
+        $postId = $postRow['post_id'];
+        $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
+        $tagMap = $this->groupTagsByPostId($tagRows);
+        $tagsForThisPost = $tagMap[$postId] ?? [];
+
+        return new Post(
+            Uuid::fromString($postRow['post_id']),
+            Uuid::fromString($postRow['author_id']),
+            $postRow['author'],
+            $postRow['slug'],
+            $postRow['title'],
+            $postRow['text'],
+            $postRow['image_path'],
+            $tagsForThisPost,
+            new DateTimeImmutable($postRow['created_at'])
         );
     }
 }

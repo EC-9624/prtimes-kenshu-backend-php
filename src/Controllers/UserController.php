@@ -25,6 +25,11 @@ class UserController
         $this->userRepo = new UserRepository($this->pdo);
     }
 
+    /**
+     * show user created post list
+     * @param $usernameParam
+     * @return void
+     */
     public function showUserPosts($usernameParam): void
     {
         $errors = [];

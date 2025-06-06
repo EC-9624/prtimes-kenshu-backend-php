@@ -20,7 +20,7 @@ class app
         $this->db = new Database();
     }
 
-    public function run()
+    public function run(): void
     {
         $this->db->getConnection();
         //top
