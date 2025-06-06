@@ -30,15 +30,22 @@ class PostController
     }
 
     // GET /posts/post_slug
-
     /**
      * @param string $post_slug
      * @return void
-     * @throws Exception
      */
     public function showPost(string $post_slug): void
     {
         $postRow = $this->postRepo->fetchPostBySlug($post_slug);
+
+        if ($postRow === null) {
+            http_response_code(404);
+            render('errors/404', [
+                'message' => "Post not found"
+            ]);
+            return;
+        }
+
         $post = $this->getPost($postRow);
 
         render('post/show', [
@@ -46,6 +53,7 @@ class PostController
             'data'  => $post
         ]);
     }
+
 
     // GET /create-post
 
@@ -160,9 +168,11 @@ class PostController
         unset($_SESSION['errors'], $_SESSION['old']);
 
         $postRow = $this->postRepo->fetchPostBySlug($slug);
-        if (!$postRow) {
+        if ($postRow === null) {
             http_response_code(404);
-            echo "Post not found.";
+            render('errors/404', [
+                'message' => "Post not found"
+            ]);
             return;
         }
 
@@ -243,17 +253,13 @@ class PostController
      * @param array $body
      * @return void
      */
-    public function deletePost(string $slug, array $body): void
+    public function deletePost(string $slug): void
     {
         // TODO: delete post logic
 
         $postRow = $this->postRepo->fetchPostBySlug($slug);
         if (!$postRow) {
             throw new PostRetrievalException("Could not retrieve post:" . $slug);
-        }
-
-        if ($postRow['deleted_at'] !== null) {
-            throw new PostDeletionException("Post is already deleted.");
         }
 
         if (!$this->pdo->inTransaction()) {
@@ -264,6 +270,9 @@ class PostController
 
             $this->postRepo->delete($postRow['post_id']);
             $this->pdo->commit();
+            $_SESSION['success_message'] = 'Post deleted successfully!';
+            header('Location: /');
+            exit();
         } catch (PDOException $e) {
 
             $this->pdo->rollBack();

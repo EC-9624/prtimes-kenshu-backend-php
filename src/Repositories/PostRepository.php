@@ -185,9 +185,9 @@ class PostRepository implements PostRepositoryInterface
     /**
      * @param string $postSlug The slug of the post to retrieve.
      * 
-     * @return array< {post_id: string, title: string, slug: string, author: string, author_id: string, image_path: ?string, created_at: string}>
+     * @return ?array< {post_id: string, title: string, slug: string, author: string, author_id: string, image_path: ?string, created_at: string}>
      */
-    public function fetchPostBySlug(string $postSlug): array
+    public function fetchPostBySlug(string $postSlug): ?array
     {
         $sql =
             "SELECT
@@ -210,7 +210,8 @@ class PostRepository implements PostRepositoryInterface
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':post_slug', $postSlug, PDO::PARAM_STR);
         $stmt->execute();
-        return  $stmt->fetch(PDO::FETCH_ASSOC);
+        $post = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $post !== false ? $post : null;
     }
 
     /**
