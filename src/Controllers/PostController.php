@@ -218,10 +218,6 @@ class PostController
             exit();
         }
 
-        $title = trim($body['title']);
-        $content = trim($body['text']);
-        $tagSlugs = $body['tag_slugs'];
-
         if (!$this->pdo->inTransaction()) {
             $this->pdo->beginTransaction();
         }
@@ -238,13 +234,13 @@ class PostController
             $this->pdo->rollBack();
             error_log("PDOException: " . $e->getMessage());
             $_SESSION['errors'] = [
-                'PDOException : ' . $e->getMessage()
+                'A database error occurred during update: ' . $e->getMessage()
             ];
         }
     }
 
     // DELETE /posts/post_id/delete
-    public function deletePost(string $slug, array $body)
+    public function deletePost(string $slug, array $body): void
     {
         // TODO: delete post logic
         echo $slug;
@@ -256,7 +252,7 @@ class PostController
      * Group tag rows by post ID.
      *
      * @param array $tagRows
-     * @return array
+     * @return array<string, array<int, array{name: string, slug: string}>>
      */
     private function groupTagsByPostId(array $tagRows): array
     {
@@ -271,6 +267,7 @@ class PostController
                 'slug' => $tag['slug'],
             ];
         }
+        preDump($tagMap);
         return $tagMap;
     }
 
@@ -315,18 +312,11 @@ class PostController
         }
 
         // Validation
-        if ($title === '') {
-            $errors[] = 'Post title is required.';
-        }
 
         if ($slug === '') {
             $errors[] = 'Post slug is required.';
         } elseif (!preg_match('/^[a-z0-9-]+$/', $slug)) {
             $errors[] = 'Slug must only contain lowercase letters, numbers, and hyphens.';
-        }
-
-        if ($text === '') {
-            $errors[] = 'Post content is required.';
         }
 
         if ($thumbnailFileData) {

@@ -25,7 +25,7 @@ class UserController
         $this->userRepo = new UserRepository($this->pdo);
     }
 
-    public function showUserPosts($usernameParam)
+    public function showUserPosts($usernameParam): void
     {
         $errors = [];
         $user = $this->userRepo->findByUsername($usernameParam);

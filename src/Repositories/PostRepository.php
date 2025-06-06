@@ -21,7 +21,6 @@ class PostRepository implements PostRepositoryInterface
     {
         $this->pdo = $pdoConnection;
         $path =  realpath(__DIR__ . '/../../public/img/uploads/');
-
         $this->uploadFileSystemDirectory = $path;
     }
 
@@ -237,7 +236,7 @@ class PostRepository implements PostRepositoryInterface
             is_array($data->thumbnailFileData) &&
             isset($data->thumbnailFileData['tmp_name']) &&
             $data->thumbnailFileData['error'] === UPLOAD_ERR_OK &&
-            !empty($data->thumbnailFileData['tmp_name'])
+            isset($data->thumbnailFileData['tmp_name'])
         ) {
             $uploadResult = $this->handleFileUpload($data->thumbnailFileData);
 
@@ -275,7 +274,7 @@ class PostRepository implements PostRepositoryInterface
             ':thumbnail_image_id' => $imageId,
         ]);
 
-        if (!empty($data->tagSlugs)) {
+        if (count($data->tagSlugs) > 0) {
             $placeholders = implode(',', array_fill(0, count($data->tagSlugs), '?'));
 
             $tagFetchSql = "
@@ -285,7 +284,7 @@ class PostRepository implements PostRepositoryInterface
             $tagFetchStmt->execute($data->tagSlugs);
             $foundTags = $tagFetchStmt->fetchAll(PDO::FETCH_COLUMN);
 
-            if (!empty($foundTags)) {
+            if (count($foundTags) > 0) {
                 $tagInsertSql = "
                 INSERT INTO post_tags (post_id, tag_id, created_at)
                 VALUES (:post_id, :tag_id, NOW())
@@ -334,14 +333,14 @@ class PostRepository implements PostRepositoryInterface
             ':post_id' => $data->postId,
         ]);
 
-        if (!empty($data->tagSlugs)) {
+        if (count($data->tagSlugs) > 0) {
             $placeholders = implode(',', array_fill(0, count($data->tagSlugs), '?'));
             $tagFetchSql = "SELECT tag_id FROM tags WHERE slug IN ($placeholders)";
             $tagStmt = $this->pdo->prepare($tagFetchSql);
             $tagStmt->execute($data->tagSlugs);
             $tagIds = $tagStmt->fetchAll(PDO::FETCH_COLUMN);
 
-            if (!empty($tagIds)) {
+            if (count($tagIds) > 0) {
                 $insertTagSql = "
                 INSERT INTO post_tags (post_id, tag_id, created_at)
                 VALUES (:post_id, :tag_id, NOW())
@@ -376,7 +375,7 @@ class PostRepository implements PostRepositoryInterface
         $timestamp = date('Ymd_His');
         $sanitizedFilename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $originalNameWithoutExt);
         $newFileName = $timestamp . '_' . $sanitizedFilename . '.' . $fileExtension;
-        $destinationPath = $this->uploadFileSystemDirectory . $newFileName;
+        $destinationPath = $this->uploadFileSystemDirectory . '/' . $newFileName;
 
         // Move the file
         if (!move_uploaded_file($uploadedFile['tmp_name'], $destinationPath)) {

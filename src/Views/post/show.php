@@ -45,7 +45,7 @@
                     </div>
                 </div>
                 <!-- Tags -->
-                <?php if (!empty($data->tags_json)): ?>
+                <?php if (count($data->tags_json) > 0): ?>
                     <div class="mt-2 flex flex-wrap gap-2">
                         <?php foreach ($data->tags_json as $tag): ?>
                             <a href="/categories/<?= htmlspecialchars($tag['slug']) ?>">
