@@ -269,7 +269,7 @@ class PostController
                 'slug' => $tag['slug'],
             ];
         }
-        preDump($tagMap);
+
         return $tagMap;
     }
 
