@@ -198,7 +198,7 @@ class PostController
     {
         if (!isset($_SESSION['user_id'])) {
             $_SESSION['errors'] = ['Please log in to update posts.'];
-            header("Location: /posts/{$slug}");
+            header("Location: /posts/{$slug}/edit");
             exit();
         }
 
