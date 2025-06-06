@@ -363,7 +363,14 @@ class PostRepository implements PostRepositoryInterface
     }
 
 
-    public function delete(string $postId) {}
+    public function delete(string $postId)
+    {
+        // Soft delete
+        $deleteSql = "UPDATE posts SET deleted_at = now() WHERE post_id = :post_id";
+        $deleteStmt = $this->pdo->prepare($deleteSql);
+        $deleteStmt->execute([':post_id' => $postId]);
+    }
+
 
     /**
      * @param array $uploadedFile
