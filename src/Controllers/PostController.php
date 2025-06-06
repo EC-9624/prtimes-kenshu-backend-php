@@ -164,9 +164,8 @@ class PostController
     {
         $errors = $_SESSION['errors'] ?? [];
         $old = $_SESSION['old'] ?? [];
-        $flash = $_SESSION['flash'] ?? null;
 
-        unset($_SESSION['errors'], $_SESSION['old'], $_SESSION['flash']);
+        unset($_SESSION['errors'], $_SESSION['old']);
 
         $postRow = $this->postRepo->fetchPostBySlug($slug);
         if (!$postRow) {
@@ -188,7 +187,6 @@ class PostController
             'tags' => $tagsForThisPost,
             'errors' => $errors,
             'old' => $old,
-            'flash' => $flash,
             'isAuthor' => $isAuthor
         ]);
     }
@@ -199,14 +197,14 @@ class PostController
     public function editPost(string $slug, array $body): void
     {
         if (!isset($_SESSION['user_id'])) {
-            $_SESSION['flash'] = 'Please log in to update posts.';
+            $_SESSION['errors'] = ['Please log in to update posts.'];
             header("Location: /posts/{$slug}");
             exit();
         }
 
         if ($_SESSION['user_id'] !== $body['author_id']) {
-            $_SESSION['flash'] = 'You are not authorized to edit this post.';
-            header("Location: /posts/{$slug}");
+            $_SESSION['errors'] = ['You are not authorized to edit this post.'];
+            header("Location: /posts/{$slug}/edit");
             exit();
         }
 
