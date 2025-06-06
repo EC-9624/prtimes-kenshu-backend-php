@@ -77,7 +77,7 @@ class Router
 
     protected function match(string $path, &$params): bool
     {
-        $pattern = preg_replace('#\{([\w]+)\}#', '([\w-]+)', $path);
+        $pattern = preg_replace('#\{([\w]+)}#', '([\w-]+)', $path);
         $pattern = "#^{$pattern}$#";
 
         if (preg_match($pattern, $this->uri, $matches)) {
