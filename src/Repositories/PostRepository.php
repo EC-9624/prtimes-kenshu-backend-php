@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Repositories\Interfaces\PostRepositoryInterface;
 use App\DTO\CreatePostDTO;
+use App\DTO\UpdatePostDTO;
 use PDOException;
 use PDO;
 use RuntimeException;
@@ -311,9 +312,8 @@ class PostRepository implements PostRepositoryInterface
         }
     }
 
-    public function update(string $postId, array $data): void
+    public function update(UpdatePostDTO $data): void
     {
-        // Update title and text
         $updateSql = "
         UPDATE posts
         SET title = :title,
@@ -321,45 +321,42 @@ class PostRepository implements PostRepositoryInterface
             updated_at = NOW()
         WHERE post_id = :post_id
     ";
-        $updateStmt = $this->pdo->prepare($updateSql);
-        $updateStmt->execute([
-            ':title' => $data['title'],
-            ':text' => $data['body'],
-            ':post_id' => $postId,
+        $stmt = $this->pdo->prepare($updateSql);
+        $stmt->execute([
+            ':title' => $data->title,
+            ':text' => $data->text,
+            ':post_id' => $data->postId,
         ]);
 
-        // Delete existing tags
-        $deleteTagsSql = "DELETE FROM post_tags WHERE post_id = :post_id";
-        $deleteTagsStmt = $this->pdo->prepare($deleteTagsSql);
-        $deleteTagsStmt->execute([
-            ':post_id' => $postId,
+        $deleteSql = "DELETE FROM post_tags WHERE post_id = :post_id";
+        $deleteStmt = $this->pdo->prepare($deleteSql);
+        $deleteStmt->execute([
+            ':post_id' => $data->postId,
         ]);
 
-        // Re-insert new tags if any
-        if (isset($data['tag_slugs'])) {
-            $placeholders = implode(',', array_fill(0, count($data['tag_slugs']), '?'));
+        if (!empty($data->tagSlugs)) {
+            $placeholders = implode(',', array_fill(0, count($data->tagSlugs), '?'));
+            $tagFetchSql = "SELECT tag_id FROM tags WHERE slug IN ($placeholders)";
+            $tagStmt = $this->pdo->prepare($tagFetchSql);
+            $tagStmt->execute($data->tagSlugs);
+            $tagIds = $tagStmt->fetchAll(PDO::FETCH_COLUMN);
 
-            $fetchTagsSql = "SELECT tag_id FROM tags WHERE slug IN ($placeholders)";
-            $fetchTagsStmt = $this->pdo->prepare($fetchTagsSql);
-            $fetchTagsStmt->execute($data['tag_slugs']);
-
-            $foundTagIds = $fetchTagsStmt->fetchAll(PDO::FETCH_COLUMN);
-
-            if (isset($foundTagIds)) {
+            if (!empty($tagIds)) {
                 $insertTagSql = "
                 INSERT INTO post_tags (post_id, tag_id, created_at)
                 VALUES (:post_id, :tag_id, NOW())
             ";
-                $insertTagStmt = $this->pdo->prepare($insertTagSql);
-                foreach ($foundTagIds as $tagId) {
-                    $insertTagStmt->execute([
-                        ':post_id' => $postId,
+                $tagInsertStmt = $this->pdo->prepare($insertTagSql);
+                foreach ($tagIds as $tagId) {
+                    $tagInsertStmt->execute([
+                        ':post_id' => $data->postId,
                         ':tag_id' => $tagId,
                     ]);
                 }
             }
         }
     }
+
 
     public function delete(string $postId) {}
 

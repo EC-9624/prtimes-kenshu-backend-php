@@ -7,6 +7,7 @@ require_once __DIR__ . '/../core/helper.php';
 use App\Core\Database;
 use App\DTO\CreatePostDTO;
 use App\DTO\ValidatedFormDTO;
+use App\DTO\UpdatePostDTO;
 use App\Exceptions\PostCreationException;
 use App\Exceptions\PostRetrievalException;
 use App\Models\Post;
@@ -226,12 +227,9 @@ class PostController
         }
 
         try {
+            $updateDto = new UpdatePostDTO($body);
 
-            $this->postRepo->update($body['post_id'], [
-                'title' => $title,
-                'body' => $content,
-                'tag_slugs' => $tagSlugs
-            ]);
+            $this->postRepo->update($updateDto);
             $this->pdo->commit();
 
             header("Location: /posts/{$slug}");
@@ -321,7 +319,6 @@ class PostController
             $errors[] = 'Post title is required.';
         }
 
-        // 🧪 Slug validation (specific to create form)
         if ($slug === '') {
             $errors[] = 'Post slug is required.';
         } elseif (!preg_match('/^[a-z0-9-]+$/', $slug)) {
