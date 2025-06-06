@@ -1,8 +1,8 @@
 <?php require(VIEW_PATH . 'partials/head.php') ?>
 <?php
-// echo '<pre>';
-// print_r($data);
-// echo '</pre>';
+echo '<pre>';
+print_r($data);
+echo '</pre>';
 ?>
 <div class="flex items-center justify-center">
     <ul class="space-y-6 m-4 flex flex-col items-center ">

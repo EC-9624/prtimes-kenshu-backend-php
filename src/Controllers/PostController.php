@@ -10,6 +10,7 @@ use App\DTO\ValidatedFormDTO;
 use App\DTO\UpdatePostDTO;
 use App\Exceptions\PostCreationException;
 use App\Exceptions\PostRetrievalException;
+use App\Exceptions\PostDeletionException;
 use App\Models\Post;
 use App\Repositories\PostRepository;
 use DateTimeImmutable;
@@ -245,9 +246,45 @@ class PostController
     public function deletePost(string $slug, array $body): void
     {
         // TODO: delete post logic
-        echo $slug;
-        print_r($body);
-        echo 'deletePost called';
+
+        $postRow = $this->postRepo->fetchPostBySlug($slug);
+        if (!$postRow) {
+            throw new PostRetrievalException("Could not retrieve post:" . $slug);
+        }
+
+        if ($postRow['deleted_at'] !== null) {
+            throw new PostDeletionException("Post is already deleted.");
+        }
+
+        if (!$this->pdo->inTransaction()) {
+            $this->pdo->beginTransaction();
+        }
+
+        try {
+
+            $this->postRepo->delete($postRow['post_id']);
+            $this->pdo->commit();
+        } catch (PDOException $e) {
+
+            $this->pdo->rollBack();
+            error_log("PDOException: " . $e->getMessage());
+            throw new PostDeletionException("Failed to delete post: " . $e->getMessage(), 0, $e);
+        } catch (PostRetrievalException $e) {
+
+            error_log("PostRetrievalException: " . $e->getMessage());
+            $_SESSION['errors'] = [
+                'Post retrieval failed. : ' . $e->getMessage()
+            ];
+        } catch (PostDeletionException $e) {
+
+            error_log("PostCreationException: " . $e->getMessage());
+            $_SESSION['errors'] = [
+                'Failed to delete post: ' . $e->getMessage()
+            ];
+
+            header('Location: /');
+            exit();
+        }
     }
 
     /**

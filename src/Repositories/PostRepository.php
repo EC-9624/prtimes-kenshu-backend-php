@@ -363,7 +363,7 @@ class PostRepository implements PostRepositoryInterface
     }
 
 
-    public function delete(string $postId)
+    public function delete(string $postId): void
     {
         // Soft delete
         $deleteSql = "UPDATE posts SET deleted_at = now() WHERE post_id = :post_id";
@@ -406,6 +406,4 @@ class PostRepository implements PostRepositoryInterface
             'image_path' => '/img/uploads/' . $newFileName,
         ];
     }
-
-    private function handleFileDeletion() {}
 }
