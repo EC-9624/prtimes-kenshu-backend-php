@@ -2,8 +2,6 @@
 
 namespace App\DTO;
 
-namespace App\DTO;
-
 class ValidatedFormDTO
 {
     public function __construct(
@@ -18,6 +16,6 @@ class ValidatedFormDTO
 
     public function hasErrors(): bool
     {
-        return !empty($this->errors);
+        return count($this->errors) > 0;
     }
 }

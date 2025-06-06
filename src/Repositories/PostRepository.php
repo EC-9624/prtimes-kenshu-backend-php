@@ -4,21 +4,23 @@ namespace App\Repositories;
 
 use App\Repositories\Interfaces\PostRepositoryInterface;
 use App\DTO\CreatePostDTO;
+use App\DTO\UpdatePostDTO;
 use PDOException;
 use PDO;
 use RuntimeException;
 use Ramsey\Uuid\Uuid;
 
-
+define('UPLOAD_PATH', realpath(__DIR__ . '/../../public/img/uploads/'));
 
 class PostRepository implements PostRepositoryInterface
 {
     private PDO $pdo;
-    private string $uploadFileSystemDirectory = __DIR__ . '/../../public/img/uploads/';
+    private string $uploadFileSystemDirectory;
 
     public function __construct(PDO $pdoConnection)
     {
         $this->pdo = $pdoConnection;
+        $this->uploadFileSystemDirectory = UPLOAD_PATH;
     }
 
     /**
@@ -151,6 +153,35 @@ class PostRepository implements PostRepositoryInterface
     }
 
     /**
+     * fetch user's posts
+     * @param string $userId
+     * @return array|false
+     */
+    public function fetchPostsByUserId(string $userId): bool|array
+    {
+        $sql =
+            "SELECT
+                p.post_id,
+                p.title,
+                p.slug,
+                u.user_name AS author,
+                u.user_id AS author_id,
+                i.image_path,
+                p.created_at
+            FROM posts p
+            JOIN users u ON p.user_id = u.user_id
+            LEFT JOIN images i ON p.thumbnail_image_id = i.image_id
+            WHERE p.user_id = :user_id
+            AND p.deleted_at IS NULL
+            ORDER BY p.created_at DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+        $stmt->execute();
+        return  $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * @param string $postSlug The slug of the post to retrieve.
      * 
      * @return array< {post_id: string, title: string, slug: string, author: string, author_id: string, image_path: ?string, created_at: string}>
@@ -189,26 +220,23 @@ class PostRepository implements PostRepositoryInterface
      * title: string,
      * slug: string,
      * text: string,
-     * thumbnail_file_data?: array<string, mixed>|null, 
+     * thumbnail_file_data?: array<string, mixed>|null,
      * alt_text?: string|null,
      * tag_slugs?: string[]|null
      * } $data
-     * @return string The ID of the newly created post, or null if file upload fails.
+     * @return void
      *
-     * @throws PDOException If a database operation fails.
      */
     public function create(CreatePostDTO $data): void
     {
+        // TODO : modify create to be able to upload multiple images 
         $postId = Uuid::uuid4()->toString();
         $imageId = null;
         $imagePath = null;
 
         // Handle File Upload and insert image first
         if (
-            is_array($data->thumbnailFileData) &&
-            isset($data->thumbnailFileData['tmp_name']) &&
-            $data->thumbnailFileData['error'] === UPLOAD_ERR_OK &&
-            !empty($data->thumbnailFileData['tmp_name'])
+            isset($data->thumbnailFileData['tmp_name']) && is_array($data->thumbnailFileData) && $data->thumbnailFileData['error'] === UPLOAD_ERR_OK
         ) {
             $uploadResult = $this->handleFileUpload($data->thumbnailFileData);
 
@@ -246,7 +274,7 @@ class PostRepository implements PostRepositoryInterface
             ':thumbnail_image_id' => $imageId,
         ]);
 
-        if (!empty($data->tagSlugs)) {
+        if (count($data->tagSlugs) > 0) {
             $placeholders = implode(',', array_fill(0, count($data->tagSlugs), '?'));
 
             $tagFetchSql = "
@@ -256,7 +284,7 @@ class PostRepository implements PostRepositoryInterface
             $tagFetchStmt->execute($data->tagSlugs);
             $foundTags = $tagFetchStmt->fetchAll(PDO::FETCH_COLUMN);
 
-            if (!empty($foundTags)) {
+            if (count($foundTags) > 0) {
                 $tagInsertSql = "
                 INSERT INTO post_tags (post_id, tag_id, created_at)
                 VALUES (:post_id, :tag_id, NOW())
@@ -283,6 +311,63 @@ class PostRepository implements PostRepositoryInterface
         }
     }
 
+    /**
+     * update title, text, tags of a post
+     * @param UpdatePostDTO $data
+     * @return void
+     */
+    public function update(UpdatePostDTO $data): void
+    {
+        $updateSql = "
+        UPDATE posts
+        SET title = :title,
+            text = :text,
+            updated_at = NOW()
+        WHERE post_id = :post_id
+    ";
+        $stmt = $this->pdo->prepare($updateSql);
+        $stmt->execute([
+            ':title' => $data->title,
+            ':text' => $data->text,
+            ':post_id' => $data->postId,
+        ]);
+
+        $deleteSql = "DELETE FROM post_tags WHERE post_id = :post_id";
+        $deleteStmt = $this->pdo->prepare($deleteSql);
+        $deleteStmt->execute([
+            ':post_id' => $data->postId,
+        ]);
+
+        if (count($data->tagSlugs) > 0) {
+            $placeholders = implode(',', array_fill(0, count($data->tagSlugs), '?'));
+            $tagFetchSql = "SELECT tag_id FROM tags WHERE slug IN ($placeholders)";
+            $tagStmt = $this->pdo->prepare($tagFetchSql);
+            $tagStmt->execute($data->tagSlugs);
+            $tagIds = $tagStmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (count($tagIds) > 0) {
+                $insertTagSql = "
+                INSERT INTO post_tags (post_id, tag_id, created_at)
+                VALUES (:post_id, :tag_id, NOW())
+            ";
+                $tagInsertStmt = $this->pdo->prepare($insertTagSql);
+                foreach ($tagIds as $tagId) {
+                    $tagInsertStmt->execute([
+                        ':post_id' => $data->postId,
+                        ':tag_id' => $tagId,
+                    ]);
+                }
+            }
+        }
+    }
+
+
+    public function delete(string $postId) {}
+
+    /**
+     * @param array $uploadedFile
+     * @return array|null
+     */
     private function handleFileUpload(array $uploadedFile): ?array
     {
         // Validate file type
@@ -299,7 +384,7 @@ class PostRepository implements PostRepositoryInterface
         $timestamp = date('Ymd_His');
         $sanitizedFilename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $originalNameWithoutExt);
         $newFileName = $timestamp . '_' . $sanitizedFilename . '.' . $fileExtension;
-        $destinationPath = $this->uploadFileSystemDirectory . $newFileName;
+        $destinationPath = $this->uploadFileSystemDirectory . '/' . $newFileName;
 
         // Move the file
         if (!move_uploaded_file($uploadedFile['tmp_name'], $destinationPath)) {
@@ -313,4 +398,6 @@ class PostRepository implements PostRepositoryInterface
             'image_path' => '/img/uploads/' . $newFileName,
         ];
     }
+
+    private function handleFileDeletion() {}
 }

@@ -7,6 +7,7 @@ use App\Core\Database;
 use App\Core\Router;
 use App\Controllers\HomeController;
 use App\Controllers\PostController;
+use App\Controllers\UserController;
 
 class app
 {
@@ -19,7 +20,7 @@ class app
         $this->db = new Database();
     }
 
-    public function run()
+    public function run(): void
     {
         $this->db->getConnection();
         //top
@@ -33,6 +34,7 @@ class app
         $this->router->get('/register', [AuthController::class, 'showRegisterForm']);
         $this->router->post('/register', [AuthController::class, 'register']);
         //users
+        $this->router->get('/users/{user_id}', [UserController::class, 'showUserPosts']);
 
         //posts
         $this->router->get('/posts/{post_slug}', [PostController::class, 'showPost']);

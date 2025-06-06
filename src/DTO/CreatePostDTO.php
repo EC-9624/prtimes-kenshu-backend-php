@@ -2,8 +2,6 @@
 
 namespace App\DTO;
 
-namespace App\DTO;
-
 class CreatePostDTO
 {
     public function __construct(

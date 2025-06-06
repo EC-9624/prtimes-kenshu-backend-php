@@ -20,13 +20,13 @@
                 </a>
                 <div class="text-sm text-gray-500 mt-1">
                     <p>Created by
-                        <a href="/users/<?= $post->user_id ?>"
+                        <a href="/users/<?= $post->user_name ?>"
                             class="text-blue-400 hover:cursor-pointer hover:border-b">
                             <?= $post->user_name ?>
                         </a>
                     </p>
                     <div class="">
-                        Published on <time><?= $post->created_at->format('Y-m-d') ?></time>
+                        Published on <time><?= $post->created_at->format('F j, Y, g:i a') ?></time>
                     </div>
                 </div>
                 <div class="mt-2 flex flex-wrap gap-2">

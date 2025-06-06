@@ -6,6 +6,7 @@ require_once __DIR__ . '/../core/helper.php';
 
 use App\Core\Database;
 use App\Repositories\UserRepository;
+use JetBrains\PhpStorm\NoReturn;
 use PDOException;
 use PDO;
 
@@ -20,12 +21,16 @@ class AuthController
         $this->userRepo = new UserRepository($this->pdo);
     }
 
-    public function showLoginForm()
+    /**
+     * show Login page
+     * @return void
+     */
+    public function showLoginForm(): void
     {
         render('auth/login', ['title' => 'Login Page']);
     }
 
-    public function showRegisterForm()
+    public function showRegisterForm(): void
     {
         render('auth/register', ['title' => 'Register Page']);
     }
@@ -40,7 +45,7 @@ class AuthController
      * Expected keys: 'user_name', 'email', 'password', 'confirm_password'
      * @return void
      */
-    public function register(array $body = [])
+    public function register(array $body = []): void
     {
         $userName = trim($body['user_name']);
         $email = trim($body['email']);
@@ -49,7 +54,7 @@ class AuthController
 
         $errors = [];
 
-        if ($userName === '' || $password === null) {
+        if ($userName === '') {
             $errors['user_name'] = 'User name is required.';
         }
 
@@ -57,7 +62,7 @@ class AuthController
             $errors['email'] = 'Valid email is required.';
         }
 
-        if ($password === '' || $password === null) {
+        if ($password === '') {
             $errors['password'] = 'Password is required.';
         } elseif (strlen($password) < 8) {
             $errors['password'] = 'Password must be at least 8 characters long.';
@@ -107,11 +112,11 @@ class AuthController
         $password = trim($body['password']);
         $errors = [];
 
-        if ($email === '' || $email === null) {
+        if ($email === '') {
             $errors['email'] = ' Email is required.';
         }
 
-        if ($password === "" || $password === null) {
+        if ($password === "") {
             $errors['password'] = 'Password is required.';
         }
 
@@ -174,7 +179,7 @@ class AuthController
      *
      * @return void
      */
-    public function logout()
+    #[NoReturn] public function logout() : void
     {
         session_unset();
         session_destroy();

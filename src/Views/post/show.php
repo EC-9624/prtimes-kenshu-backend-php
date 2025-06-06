@@ -34,18 +34,18 @@
                     <p>
                         Created by
                         <a
-                            href="/users/<?= htmlspecialchars($data->user_id) ?>"
+                            href="/users/<?= htmlspecialchars($data->user_name) ?>"
                             class="text-blue-400 hover:cursor-pointer hover:border-b">
                             <?= htmlspecialchars($data->user_name) ?>
                         </a>
                     </p>
                     <div>
                         Published on
-                        <time><?= $data->created_at->format('Y-m-d') ?></time>
+                        <time><?= $data->created_at->format('F j, Y, g:i a') ?></time>
                     </div>
                 </div>
                 <!-- Tags -->
-                <?php if (!empty($data->tags_json)): ?>
+                <?php if (count($data->tags_json) > 0): ?>
                     <div class="mt-2 flex flex-wrap gap-2">
                         <?php foreach ($data->tags_json as $tag): ?>
                             <a href="/categories/<?= htmlspecialchars($tag['slug']) ?>">

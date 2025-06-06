@@ -27,31 +27,34 @@ class Router
         }
     }
 
-    public function get(string $path, callable|array $action)
+    public function get(string $path, callable|array $action): void
     {
         $this->routes['GET'][$path] = $action;
     }
 
-    public function post(string $path, callable|array $action)
+    public function post(string $path, callable|array $action): void
     {
         $this->routes['POST'][$path] = $action;
     }
 
-    public function put(string $path, callable|array $action)
+    public function put(string $path, callable|array $action): void
     {
         $this->routes['PUT'][$path] = $action;
     }
 
-    public function patch(string $path, callable|array $action)
+    public function patch(string $path, callable|array $action): void
     {
         $this->routes['PATCH'][$path] = $action;
     }
 
-    public function delete(string $path, callable|array $action)
+    public function delete(string $path, callable|array $action): void
     {
         $this->routes['DELETE'][$path] = $action;
     }
 
+    /**
+     * @return mixed|void
+     */
     public function dispatch()
     {
         $routes = $this->routes[$this->method] ?? [];
@@ -74,7 +77,7 @@ class Router
 
     protected function match(string $path, &$params): bool
     {
-        $pattern = preg_replace('#\{([\w]+)\}#', '([\w-]+)', $path);
+        $pattern = preg_replace('#\{([\w]+)}#', '([\w-]+)', $path);
         $pattern = "#^{$pattern}$#";
 
         if (preg_match($pattern, $this->uri, $matches)) {
