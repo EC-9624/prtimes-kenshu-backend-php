@@ -47,7 +47,7 @@ class UserRepository implements UserRepositoryInterface
         $stmt->execute([$userName]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $row
+        return count($row) > 0
             ? new User(
                 Uuid::fromString($row['user_id']),
                 $row['user_name'],
