@@ -72,6 +72,7 @@ class PostController
     // TODO : modify createPost to be able to upload multiple images 
     public function createPost($body): void
     {
+
         if (!isset($_SESSION['user_id'])) {
             $_SESSION['errors'] = ['Please log in to create a post.'];
             header('Location: /login');
@@ -83,7 +84,7 @@ class PostController
 
 
         if ($validatedData->hasErrors()) {
-            $_SESSION['errors'] = $validatedData['errors'];
+            $_SESSION['errors'] = $validatedData->errors;
             $_SESSION['old'] = $body;
             header('Location: /create-post');
             exit();
@@ -161,48 +162,84 @@ class PostController
     // GET /posts/post_slug/edit 
     public function showEditPost(string $slug): void
     {
+        $errors = $_SESSION['errors'] ?? [];
+        $old = $_SESSION['old'] ?? [];
+        $flash = $_SESSION['flash'] ?? null;
+
+        unset($_SESSION['errors'], $_SESSION['old'], $_SESSION['flash']);
 
         $postRow = $this->postRepo->fetchPostBySlug($slug);
+        if (!$postRow) {
+            http_response_code(404);
+            echo "Post not found.";
+            return;
+        }
+
         $postId = $postRow['post_id'];
         $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
         $tagMap = $this->groupTagsByPostId($tagRows);
         $tagsForThisPost = $tagMap[$postId] ?? [];
-        echo '<pre>';
 
-        if (isset($_SESSION['user_id'])) {
-            print_r($_SESSION['user_id']);
-        } else {
-            print_r('user_id not set in session.');
-        }
-        echo '<br>';
-        print_r('$postRow userId: ' . $postRow['author_id']);
-        echo '</pre>';
+        $isAuthor = isset($_SESSION['user_id']) && $_SESSION['user_id'] === $postRow['author_id'];
 
         render('post/edit', [
-            'title' => 'Edit Post Page',
+            'title' => 'Edit Post',
             'post' => $postRow,
-            'tags' => $tagsForThisPost
-
+            'tags' => $tagsForThisPost,
+            'errors' => $errors,
+            'old' => $old,
+            'flash' => $flash,
+            'isAuthor' => $isAuthor
         ]);
     }
 
+
+
     // PATCH /posts/post_slug/edit
-    public function editPost($slug, $body)
+    public function editPost(string $slug, array $body): void
     {
-        // TODO: implement patch update logic only Title and Body
-        echo '<pre>';
-        var_dump($slug);
-        var_dump($body);
-        echo '</pre>';
-        echo '<br>';
-        echo 'editPost Called';
+        if (!isset($_SESSION['user_id'])) {
+            $_SESSION['flash'] = 'Please log in to update posts.';
+            header("Location: /posts/{$slug}");
+            exit();
+        }
+
+        if ($_SESSION['user_id'] !== $body['author_id']) {
+            $_SESSION['flash'] = 'You are not authorized to edit this post.';
+            header("Location: /posts/{$slug}");
+            exit();
+        }
+
+
+        $errors = $this->validateBasicPostFields($body);
+
+        if (!empty($errors)) {
+            $_SESSION['errors'] = $errors;
+            $_SESSION['old'] = $body;
+            header("Location: /posts/{$slug}/edit");
+            exit();
+        }
+
+        $title = trim($body['title']);
+        $content = trim($body['text']);
+
+        $this->postRepo->update($body['post_id'], [
+            'title' => $title,
+            'body' => $content,
+            'tag_slugs' => $body['tag_slugs']
+        ]);
+
+        // header("Location: /posts/{$slug}");
+        // exit();
     }
 
+
     // DELETE /posts/post_id/delete
-    public function deletePost(string $post_id)
+    public function deletePost(string $slug, array $body)
     {
         // TODO: delete post logic
-        echo $post_id;
+        echo $slug;
+        print_r($body);
         echo 'deletePost called';
     }
 
@@ -228,15 +265,35 @@ class PostController
         return $tagMap;
     }
 
-    private function validatePostForm(array $body, array $files): ValidatedFormDTO
+    private function validateBasicPostFields(array $body): array
     {
         $errors = [];
+
+        $title = trim($body['title'] ?? '');
+        $text = trim($body['text'] ?? '');
+
+        if ($title === '') {
+            $errors[] = 'Title is required.';
+        }
+
+        if ($text === '') {
+            $errors[] = 'Body content is required.';
+        }
+
+        return $errors;
+    }
+
+    private function validatePostForm(array $body, array $files): ValidatedFormDTO
+    {
+
+        $errors = $this->validateBasicPostFields($body);
 
         $title = trim($body['title'] ?? '');
         $slug = trim($body['slug'] ?? '');
         $text = trim($body['text'] ?? '');
         $altText = trim($body['alt_text'] ?? '');
         $tagSlugs = $body['tag_slugs'] ?? [];
+
 
         $thumbnailFileData = null;
         if (isset($files['thumbnail_image'])) {
@@ -253,6 +310,7 @@ class PostController
             $errors[] = 'Post title is required.';
         }
 
+        // 🧪 Slug validation (specific to create form)
         if ($slug === '') {
             $errors[] = 'Post slug is required.';
         } elseif (!preg_match('/^[a-z0-9-]+$/', $slug)) {

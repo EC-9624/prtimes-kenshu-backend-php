@@ -18,6 +18,6 @@ class ValidatedFormDTO
 
     public function hasErrors(): bool
     {
-        return count($this->errors) <= 0; //bool
+        return !empty($this->errors);
     }
 }

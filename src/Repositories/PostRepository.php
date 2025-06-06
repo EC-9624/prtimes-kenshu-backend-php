@@ -311,8 +311,12 @@ class PostRepository implements PostRepositoryInterface
         }
     }
 
-    public function update(CreatePostDTO $data)
+    public function update(string $postId, array $data)
     {
+        echo 'update block';
+        preDump($postId);
+        preDump($data);
+
         // update data only Body and title
     }
 

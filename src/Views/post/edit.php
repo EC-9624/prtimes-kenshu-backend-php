@@ -3,7 +3,6 @@
 // print_r($post);
 // print_r($tags);
 // echo '</pre>';
-
 ?>
 <?php require(VIEW_PATH . 'partials/head.php') ?>
 
@@ -23,6 +22,8 @@
     <form action="/posts/<?= htmlspecialchars($post['slug']) ?>/edit" method="POST" class="space-y-6">
         <input type="hidden" name="_method" value="PATCH">
         <input type="hidden" name="post_id" value="<?= htmlspecialchars($post['post_id']) ?>">
+        <input type="hidden" name="author_id" value="<?= htmlspecialchars($post['author_id']) ?>">
+
         <div>
             <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Post Title:</label>
             <input
