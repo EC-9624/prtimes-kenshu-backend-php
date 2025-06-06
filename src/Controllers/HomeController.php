@@ -25,11 +25,15 @@ class HomeController
      */
     public function index(): void
     {
+        $errors = $_SESSION['errors'] ?? null;
+        unset($_SESSION['errors']);
+
         $postRows = $this->postRepo->fetchAllPostsRaw();
         if (count($postRows) === 0) {
             render('home/index', [
                 'title' => 'Home Page',
-                'data'  => []
+                'data'  => [],
+                'errors' => $errors
             ]);
             return;
         }
@@ -41,7 +45,8 @@ class HomeController
 
         render('home/index', [
             'title' => 'Home Page',
-            'data'  => $posts
+            'data'  => $posts,
+            'errors' => $errors
         ]);
     }
 
