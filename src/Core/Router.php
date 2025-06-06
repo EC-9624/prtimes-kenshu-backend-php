@@ -52,6 +52,9 @@ class Router
         $this->routes['DELETE'][$path] = $action;
     }
 
+    /**
+     * @return mixed|void
+     */
     public function dispatch()
     {
         $routes = $this->routes[$this->method] ?? [];
