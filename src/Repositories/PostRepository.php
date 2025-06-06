@@ -10,7 +10,7 @@ use PDO;
 use RuntimeException;
 use Ramsey\Uuid\Uuid;
 
-
+define('UPLOAD_PATH', realpath(__DIR__ . '/../../public/img/uploads/'));
 
 class PostRepository implements PostRepositoryInterface
 {
@@ -20,8 +20,7 @@ class PostRepository implements PostRepositoryInterface
     public function __construct(PDO $pdoConnection)
     {
         $this->pdo = $pdoConnection;
-        $path =  realpath(__DIR__ . '/../../public/img/uploads/');
-        $this->uploadFileSystemDirectory = $path;
+        $this->uploadFileSystemDirectory = UPLOAD_PATH;
     }
 
     /**
