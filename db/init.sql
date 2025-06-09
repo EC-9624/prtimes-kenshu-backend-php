@@ -46,10 +46,15 @@ COMMENT ON COLUMN "posts"."deleted_at" IS 'soft delete';
 
 -- foreign keys
 ALTER TABLE "posts" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id");
-ALTER TABLE "posts" ADD FOREIGN KEY ("thumbnail_image_id") REFERENCES "images" ("image_id");
+
+ALTER TABLE "posts"
+ADD CONSTRAINT posts_thumbnail_image_id_fkey
+FOREIGN KEY ("thumbnail_image_id") REFERENCES "images" ("image_id")
+ON DELETE SET NULL;
+
 ALTER TABLE "post_tags" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id");
 ALTER TABLE "post_tags" ADD FOREIGN KEY ("tag_id") REFERENCES "tags" ("tag_id");
-ALTER TABLE "images" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id");
+ALTER TABLE "images" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id") ON DELETE CASCADE;
 
 -- indexes
 
