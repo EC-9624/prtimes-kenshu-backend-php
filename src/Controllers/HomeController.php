@@ -23,7 +23,7 @@ class HomeController
     /**
      * Show the home page with all posts.
      */
-    public function index()
+    public function index(): void
     {
         $postRows = $this->postRepo->fetchAllPostsRaw();
         if (count($postRows) === 0) {
@@ -99,7 +99,7 @@ class HomeController
      *
      * @param array $postRows
      * @param array $tagMap
-     * @return array
+     * @return array<Post>
      */
     private function buildPostModels(array $postRows, array $tagMap): array
     {

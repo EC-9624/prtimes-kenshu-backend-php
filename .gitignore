@@ -2,3 +2,4 @@
 tailwind.config.mjs
 tailwindcss
 /public/img/uploads
+.idea
