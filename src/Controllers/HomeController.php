@@ -8,6 +8,7 @@ use App\Core\Database;
 use App\Repositories\PostRepository;
 use App\Models\Post;
 use PDO;
+use DateMalformedStringException;
 
 class HomeController
 {
@@ -109,11 +110,18 @@ class HomeController
     private function buildPostModels(array $postRows, array $tagMap): array
     {
         $posts = [];
+
         foreach ($postRows as $row) {
-            $tagsForThisPost = $tagMap[$row['post_id']] ?? [];
-            $row['tags_json'] = json_encode($tagsForThisPost);
-            $posts[] = Post::fromListViewData($row);
+            try {
+                $tagsForThisPost = $tagMap[$row['post_id']] ?? [];
+                $row['tags_json'] = json_encode($tagsForThisPost);
+                $posts[] = Post::fromListViewData($row);
+            } catch (DateMalformedStringException $e) {
+                error_log("Failed to parse date for post ID {$row['post_id']}: " . $e->getMessage());
+                continue;
+            }
         }
+
         return $posts;
     }
 }
