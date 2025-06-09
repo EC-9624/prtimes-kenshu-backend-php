@@ -1,5 +1,6 @@
 <?php require(VIEW_PATH . 'partials/head.php') ?>
-
+<?php //preDump($data)
+?>
 <div class="flex items-center justify-center">
     <div class="space-y-6 m-4 flex flex-col items-center w-full max-w-2xl">
         <!-- Back button -->
@@ -60,6 +61,16 @@
                 <div class="mt-4 text-gray-800 leading-relaxed">
                     <?= nl2br(htmlspecialchars($data->text)) ?>
                 </div>
+                <div class="mt-4 grid grid-cols-2 max-w-xl w-full items-center justify-center">
+                    <?php foreach ($data->additionalImages as $img): ?>
+                        <img
+                            src="<?= htmlspecialchars($img['image_path']) ?>"
+                            width="280"
+                            height="280"
+                            class="mt-2 object-cover rounded max-w-xs">
+                    <?php endforeach; ?>
+                </div>
+
             </div>
         </div>
     </div>

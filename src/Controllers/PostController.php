@@ -442,7 +442,8 @@ class PostController
             $postRow['text'],
             $postRow['image_path'],
             $tagsForThisPost,
-            new DateTimeImmutable($postRow['created_at'])
+            new DateTimeImmutable($postRow['created_at']),
+            $postRow['images']
         );
     }
 }

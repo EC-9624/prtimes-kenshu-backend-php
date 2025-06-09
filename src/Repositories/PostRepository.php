@@ -197,6 +197,7 @@ class PostRepository implements PostRepositoryInterface
                 u.user_name AS author,
                 u.user_id AS author_id,
                 i.image_path,
+                p.thumbnail_image_id,
                 p.created_at
             FROM posts p
             JOIN users u ON p.user_id = u.user_id
@@ -210,7 +211,30 @@ class PostRepository implements PostRepositoryInterface
         $stmt->bindValue(':post_slug', $postSlug, PDO::PARAM_STR);
         $stmt->execute();
         $post = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $post !== false ? $post : null;
+
+        if (!$post) {
+            return null;
+        }
+
+        $imageSql = "
+            SELECT image_id, image_path, alt_text, created_at
+            FROM images
+            WHERE post_id = :post_id
+              AND image_id != :thumbnail_image_id
+        ";
+        $imageStmt = $this->pdo->prepare($imageSql);
+        $imageStmt->execute([
+            ':post_id' => $post['post_id'],
+            ':thumbnail_image_id' => $post['thumbnail_image_id'] ?? ''
+        ]);
+        $images = $imageStmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+        $post['images'] = $images;
+
+        // preDump($post);
+        // die;
+        return $post;
     }
 
     /**
