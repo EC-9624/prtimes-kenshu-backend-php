@@ -11,7 +11,9 @@ class ValidatedFormDTO
         public string $text,
         public string $altText,
         public array $tagSlugs,
-        public ?array $thumbnailFileData = null
+        public ?array $thumbnailFileData = null,
+        public ?array $additionalImages = null
+
     ) {}
 
     public function hasErrors(): bool

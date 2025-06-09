@@ -224,43 +224,19 @@ class PostRepository implements PostRepositoryInterface
      * thumbnail_file_data?: array<string, mixed>|null,
      * alt_text?: string|null,
      * tag_slugs?: string[]|null
+     * array? $additionalImages<mixed>|null
      * } $data
      * @return void
      *
      */
     public function create(CreatePostDTO $data): void
     {
-        // TODO : modify create to be able to upload multiple images 
+
         $postId = Uuid::uuid4()->toString();
-        $imageId = null;
-        $imagePath = null;
+        $thumbnailImageId = null;
+        $thumbnailImagePath = null;
 
-        // Handle File Upload and insert image first
-        if (
-            isset($data->thumbnailFileData['tmp_name']) && is_array($data->thumbnailFileData) && $data->thumbnailFileData['error'] === UPLOAD_ERR_OK
-        ) {
-            $uploadResult = $this->handleFileUpload($data->thumbnailFileData);
-
-            if (!$uploadResult) {
-                $this->pdo->rollBack();
-                return;
-            }
-
-            $imageId = $uploadResult['image_id'];
-            $imagePath = $uploadResult['image_path'];
-
-            $imageSql = "
-            INSERT INTO images (image_id, image_path, alt_text, created_at)
-            VALUES (:image_id, :image_path, :alt_text, NOW())
-        ";
-            $imageStmt = $this->pdo->prepare($imageSql);
-            $imageStmt->execute([
-                ':image_id' => $imageId,
-                ':image_path' => $imagePath,
-                ':alt_text' => $data->altText,
-            ]);
-        }
-
+        // create post before upload images (thumbnail_image_id = null)
         $postSql = "
         INSERT INTO posts (post_id, user_id, title, slug, text, thumbnail_image_id, created_at)
         VALUES (:post_id, :user_id, :title, :slug, :text, :thumbnail_image_id, NOW())
@@ -272,8 +248,64 @@ class PostRepository implements PostRepositoryInterface
             ':title' => $data->title,
             ':slug' => $data->slug,
             ':text' => $data->text,
-            ':thumbnail_image_id' => $imageId,
+            ':thumbnail_image_id' => $thumbnailImageId,
         ]);
+
+        // Handle File Upload and insert thumbnailImageId 
+        if (
+            isset($data->thumbnailFileData['tmp_name']) && is_array($data->thumbnailFileData) && $data->thumbnailFileData['error'] === UPLOAD_ERR_OK
+        ) {
+            $uploadResult = $this->handleFileUpload($data->thumbnailFileData);
+
+            if (!$uploadResult) {
+                return;
+            }
+
+            $thumbnailImageId = $uploadResult['image_id'];
+            $thumbnailImagePath = $uploadResult['image_path'];
+
+            $imageSql = "
+            INSERT INTO images (image_id, image_path, alt_text, created_at, post_id)
+            VALUES (:image_id, :image_path, :alt_text, NOW(), :post_id)
+        ";
+            $imageStmt = $this->pdo->prepare($imageSql);
+            $imageStmt->execute([
+                ':image_id' => $thumbnailImageId,
+                ':image_path' => $thumbnailImagePath,
+                ':alt_text' => $data->altText,
+                ':post_id' => $postId,
+            ]);
+        }
+
+        // handle multiple file upload and insert images 
+        if (isset($data->additionalImages) && is_iterable($data->additionalImages)) {
+            foreach ($data->additionalImages as $img) {
+
+                if (
+                    isset($img['tmp_name']) && is_array($img) && $img['error'] === UPLOAD_ERR_OK
+                ) {
+                    $uploadResult = $this->handleFileUpload($img);
+                    if (!$uploadResult) {
+                        return;
+                    }
+
+                    $imageId = $uploadResult['image_id'];
+                    $imagePath = $uploadResult['image_path'];
+
+                    $imageSql = "
+            INSERT INTO images (image_id, image_path, alt_text, created_at, post_id)
+            VALUES (:image_id, :image_path, :alt_text, NOW(), :post_id)
+        ";
+                    $imageStmt = $this->pdo->prepare($imageSql);
+                    $imageStmt->execute([
+                        ':image_id' => $imageId,
+                        ':image_path' => $imagePath,
+                        ':alt_text' => null,
+                        ':post_id' => $postId,
+                    ]);
+                }
+            }
+        }
 
         if (count($data->tagSlugs) > 0) {
             $placeholders = implode(',', array_fill(0, count($data->tagSlugs), '?'));
@@ -300,14 +332,12 @@ class PostRepository implements PostRepositoryInterface
             }
         }
 
-        if ($imageId !== null) {
-            $updateImageSql = "
-            UPDATE images SET post_id = :post_id WHERE image_id = :image_id
-        ";
-            $updateImageStmt = $this->pdo->prepare($updateImageSql);
-            $updateImageStmt->execute([
+        if ($thumbnailImageId) {
+            $updateSql = "UPDATE posts SET thumbnail_image_id = :thumbnail_image_id WHERE post_id = :post_id";
+            $updateStmt = $this->pdo->prepare($updateSql);
+            $updateStmt->execute([
+                ':thumbnail_image_id' => $thumbnailImageId,
                 ':post_id' => $postId,
-                ':image_id' => $imageId,
             ]);
         }
     }

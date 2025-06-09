@@ -108,7 +108,8 @@ class PostController
             text: $validatedData->text,
             thumbnailFileData: $validatedData->thumbnailFileData,
             altText: $validatedData->altText,
-            tagSlugs: $validatedData->tagSlugs
+            tagSlugs: $validatedData->tagSlugs,
+            additionalImages: $validatedData->additionalImages
         );
 
         if (!$this->pdo->inTransaction()) {
@@ -370,6 +371,24 @@ class PostController
             }
         }
 
+        $additionalImages = [];
+        if (isset($files['additional_images']['name'][0])) {
+            foreach ($_FILES['additional_images']['name'] as $index => $name) {
+                $fileError = $_FILES['additional_images']['error'][$index];
+                if ($_FILES['additional_images']['error'][$index] === UPLOAD_ERR_OK) {
+                    $additionalImages[] = [
+                        'name' => $_FILES['additional_images']['name'][$index],
+                        'type' => $_FILES['additional_images']['type'][$index],
+                        'tmp_name' => $_FILES['additional_images']['tmp_name'][$index],
+                        'error' => $_FILES['additional_images']['error'][$index],
+                        'size' => $_FILES['additional_images']['size'][$index],
+                    ];
+                } elseif ($fileError !== UPLOAD_ERR_NO_FILE) {
+                    $errors[] = 'File upload failed with error code: ' . $fileError;
+                }
+            }
+        }
+
         // Validation
 
         if ($slug === '') {
@@ -396,7 +415,8 @@ class PostController
             text: $text,
             altText: $altText,
             tagSlugs: $tagSlugs,
-            thumbnailFileData: $thumbnailFileData
+            thumbnailFileData: $thumbnailFileData,
+            additionalImages: $additionalImages
         );
     }
 
