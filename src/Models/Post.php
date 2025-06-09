@@ -5,6 +5,8 @@ namespace App\Models;
 use DateTimeImmutable;
 use Ramsey\Uuid\UuidInterface;
 use Ramsey\Uuid\UUID;
+use DateMalformedStringException;
+use DateTimeZone;
 
 class Post
 {
@@ -115,6 +117,13 @@ class Post
      */
     public static function fromListViewData(array $data): self
     {
+        try {
+            $createdAt = new DateTimeImmutable($data['created_at'], new DateTimeZone('Asia/Tokyo'));
+        } catch (DateMalformedStringException $e) {
+            $_SESSION['errors'] = ["Failed to parse date for post ID {$data['post_id']}: " . $e->getMessage()];
+            error_log("Failed to parse date for post ID {$data['post_id']}: " . $e->getMessage());
+        }
+
         return new self(
             Uuid::fromString($data['post_id']),
             Uuid::fromString($data['author_id']),
@@ -124,7 +133,7 @@ class Post
             '', // Text is not needed in list view
             $data['image_path'],
             json_decode($data['tags_json'], true),
-            new DateTimeImmutable($data['created_at']),
+            $createdAt,
             null
         );
     }

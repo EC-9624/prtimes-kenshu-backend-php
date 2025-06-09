@@ -18,6 +18,8 @@ use Exception;
 use PDO;
 use PDOException;
 use Ramsey\Uuid\Uuid;
+use DateMalformedStringException;
+use DateTimeZone;
 
 class PostController
 {
@@ -402,10 +404,25 @@ class PostController
     }
 
     /**
-     * validate additional images
-     * @param array $files
-     * @param array $errors
-     * @return array
+     * Validate additional images
+     *
+     * @param array{
+     *     additional_images: array{
+     *         name: string[],
+     *         type: string[],
+     *         tmp_name: string[],
+     *         error: int[],
+     *         size: int[]
+     *     }
+     * } $files
+     * @param list<string> $errors
+     * @return list<array{
+     *     name: string,
+     *     type: string,
+     *     tmp_name: string,
+     *     error: int,
+     *     size: int
+     * }>
      */
     private function validateAdditionalImages(array $files, array &$errors): array
     {
@@ -444,6 +461,12 @@ class PostController
         $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
         $tagMap = $this->groupTagsByPostId($tagRows);
         $tagsForThisPost = $tagMap[$postId] ?? [];
+        try {
+            $createdAt = new DateTimeImmutable($postRow['created_at'], new DateTimeZone('Asia/Tokyo'));
+        } catch (DateMalformedStringException $e) {
+            $_SESSION['errors'] = ["Failed to parse date for post ID {$postRow['post_id']}: " . $e->getMessage()];
+            error_log("Failed to parse date for post ID {$postRow['post_id']}: " . $e->getMessage());
+        }
 
         return new Post(
             Uuid::fromString($postRow['post_id']),
@@ -454,7 +477,7 @@ class PostController
             $postRow['text'],
             $postRow['image_path'],
             $tagsForThisPost,
-            new DateTimeImmutable($postRow['created_at']),
+            $createdAt,
             $postRow['images']
         );
     }
