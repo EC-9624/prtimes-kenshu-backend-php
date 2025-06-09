@@ -251,12 +251,10 @@ class PostController
 
     /**
      * @param string $slug
-     * @param array $body
      * @return void
      */
     public function deletePost(string $slug): void
     {
-        // TODO: delete post logic
 
         $postRow = $this->postRepo->fetchPostBySlug($slug);
         if (!$postRow) {
@@ -360,6 +358,7 @@ class PostController
         $altText = trim($body['alt_text'] ?? '');
         $tagSlugs = $body['tag_slugs'] ?? [];
 
+        // Validation
 
         $thumbnailFileData = null;
         if (isset($files['thumbnail_image'])) {
@@ -371,25 +370,7 @@ class PostController
             }
         }
 
-        $additionalImages = [];
-        if (isset($files['additional_images']['name'][0])) {
-            foreach ($_FILES['additional_images']['name'] as $index => $name) {
-                $fileError = $_FILES['additional_images']['error'][$index];
-                if ($_FILES['additional_images']['error'][$index] === UPLOAD_ERR_OK) {
-                    $additionalImages[] = [
-                        'name' => $_FILES['additional_images']['name'][$index],
-                        'type' => $_FILES['additional_images']['type'][$index],
-                        'tmp_name' => $_FILES['additional_images']['tmp_name'][$index],
-                        'error' => $_FILES['additional_images']['error'][$index],
-                        'size' => $_FILES['additional_images']['size'][$index],
-                    ];
-                } elseif ($fileError !== UPLOAD_ERR_NO_FILE) {
-                    $errors[] = 'File upload failed with error code: ' . $fileError;
-                }
-            }
-        }
-
-        // Validation
+        $additionalImages = $this->validateAdditionalImages($files, $errors);
 
         if ($slug === '') {
             $errors[] = 'Post slug is required.';
@@ -418,6 +399,37 @@ class PostController
             thumbnailFileData: $thumbnailFileData,
             additionalImages: $additionalImages
         );
+    }
+
+    /**
+     * validate additional images
+     * @param array $files
+     * @param array $errors
+     * @return array
+     */
+    private function validateAdditionalImages(array $files, array &$errors): array
+    {
+        $additionalImages = [];
+
+        if (isset($files['additional_images']['name'][0])) {
+            foreach ($files['additional_images']['name'] as $index => $name) {
+                $fileError = $files['additional_images']['error'][$index];
+
+                if ($fileError === UPLOAD_ERR_OK) {
+                    $additionalImages[] = [
+                        'name' => $files['additional_images']['name'][$index],
+                        'type' => $files['additional_images']['type'][$index],
+                        'tmp_name' => $files['additional_images']['tmp_name'][$index],
+                        'error' => $files['additional_images']['error'][$index],
+                        'size' => $files['additional_images']['size'][$index],
+                    ];
+                } elseif ($fileError !== UPLOAD_ERR_NO_FILE) {
+                    $errors[] = 'File upload failed with error code: ' . $fileError;
+                }
+            }
+        }
+
+        return $additionalImages;
     }
 
     /**

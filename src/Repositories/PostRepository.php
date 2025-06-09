@@ -5,10 +5,10 @@ namespace App\Repositories;
 use App\Repositories\Interfaces\PostRepositoryInterface;
 use App\DTO\CreatePostDTO;
 use App\DTO\UpdatePostDTO;
-use PDOException;
 use PDO;
 use RuntimeException;
 use Ramsey\Uuid\Uuid;
+use Traversable;
 
 define('UPLOAD_PATH', realpath(__DIR__ . '/../../public/img/uploads/'));
 
@@ -232,8 +232,6 @@ class PostRepository implements PostRepositoryInterface
 
         $post['images'] = $images;
 
-        // preDump($post);
-        // die;
         return $post;
     }
 
@@ -248,8 +246,8 @@ class PostRepository implements PostRepositoryInterface
      * thumbnail_file_data?: array<string, mixed>|null,
      * alt_text?: string|null,
      * tag_slugs?: string[]|null
-     * array? $additionalImages<mixed>|null
-     * } $data
+     * $data array? $additionalImages<mixed>|null
+     *  
      * @return void
      *
      */
@@ -257,13 +255,11 @@ class PostRepository implements PostRepositoryInterface
     {
 
         $postId = Uuid::uuid4()->toString();
-        $thumbnailImageId = null;
-        $thumbnailImagePath = null;
 
         // create post before upload images (thumbnail_image_id = null)
         $postSql = "
-        INSERT INTO posts (post_id, user_id, title, slug, text, thumbnail_image_id, created_at)
-        VALUES (:post_id, :user_id, :title, :slug, :text, :thumbnail_image_id, NOW())
+        INSERT INTO posts (post_id, user_id, title, slug, text, created_at)
+        VALUES (:post_id, :user_id, :title, :slug, :text, NOW())
     ";
         $postStmt = $this->pdo->prepare($postSql);
         $postStmt->execute([
@@ -272,7 +268,6 @@ class PostRepository implements PostRepositoryInterface
             ':title' => $data->title,
             ':slug' => $data->slug,
             ':text' => $data->text,
-            ':thumbnail_image_id' => $thumbnailImageId,
         ]);
 
         // Handle File Upload and insert thumbnailImageId 
@@ -301,35 +296,8 @@ class PostRepository implements PostRepositoryInterface
             ]);
         }
 
-        // handle multiple file upload and insert images 
-        if (isset($data->additionalImages) && is_iterable($data->additionalImages)) {
-            foreach ($data->additionalImages as $img) {
+        $this->handleAdditionalImages($data->additionalImages, $postId);
 
-                if (
-                    isset($img['tmp_name']) && is_array($img) && $img['error'] === UPLOAD_ERR_OK
-                ) {
-                    $uploadResult = $this->handleFileUpload($img);
-                    if (!$uploadResult) {
-                        return;
-                    }
-
-                    $imageId = $uploadResult['image_id'];
-                    $imagePath = $uploadResult['image_path'];
-
-                    $imageSql = "
-            INSERT INTO images (image_id, image_path, alt_text, created_at, post_id)
-            VALUES (:image_id, :image_path, :alt_text, NOW(), :post_id)
-        ";
-                    $imageStmt = $this->pdo->prepare($imageSql);
-                    $imageStmt->execute([
-                        ':image_id' => $imageId,
-                        ':image_path' => $imagePath,
-                        ':alt_text' => null,
-                        ':post_id' => $postId,
-                    ]);
-                }
-            }
-        }
 
         if (count($data->tagSlugs) > 0) {
             $placeholders = implode(',', array_fill(0, count($data->tagSlugs), '?'));
@@ -356,7 +324,7 @@ class PostRepository implements PostRepositoryInterface
             }
         }
 
-        if ($thumbnailImageId) {
+        if (isset($thumbnailImageId)) {
             $updateSql = "UPDATE posts SET thumbnail_image_id = :thumbnail_image_id WHERE post_id = :post_id";
             $updateStmt = $this->pdo->prepare($updateSql);
             $updateStmt->execute([
@@ -462,5 +430,38 @@ class PostRepository implements PostRepositoryInterface
             'image_id'   => Uuid::uuid4()->toString(),
             'image_path' => '/img/uploads/' . $newFileName,
         ];
+    }
+
+    private function handleAdditionalImages(array|Traversable|null $images, string $postId): void
+    {
+        if (!is_iterable($images)) {
+            return;
+        }
+
+        foreach ($images as $img) {
+            if (
+                isset($img['tmp_name']) && is_array($img) && $img['error'] === UPLOAD_ERR_OK
+            ) {
+                $uploadResult = $this->handleFileUpload($img);
+                if (!$uploadResult) {
+                    continue;
+                }
+
+                $imageId = $uploadResult['image_id'];
+                $imagePath = $uploadResult['image_path'];
+
+                $imageSql = "
+                INSERT INTO images (image_id, image_path, alt_text, created_at, post_id)
+                VALUES (:image_id, :image_path, :alt_text, NOW(), :post_id)
+            ";
+                $imageStmt = $this->pdo->prepare($imageSql);
+                $imageStmt->execute([
+                    ':image_id' => $imageId,
+                    ':image_path' => $imagePath,
+                    ':alt_text' => null,
+                    ':post_id' => $postId,
+                ]);
+            }
+        }
     }
 }
