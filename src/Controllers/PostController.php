@@ -18,6 +18,8 @@ use Exception;
 use PDO;
 use PDOException;
 use Ramsey\Uuid\Uuid;
+use DateMalformedStringException;
+use DateTimeZone;
 
 class PostController
 {
@@ -108,7 +110,8 @@ class PostController
             text: $validatedData->text,
             thumbnailFileData: $validatedData->thumbnailFileData,
             altText: $validatedData->altText,
-            tagSlugs: $validatedData->tagSlugs
+            tagSlugs: $validatedData->tagSlugs,
+            additionalImages: $validatedData->additionalImages
         );
 
         if (!$this->pdo->inTransaction()) {
@@ -250,12 +253,10 @@ class PostController
 
     /**
      * @param string $slug
-     * @param array $body
      * @return void
      */
     public function deletePost(string $slug): void
     {
-        // TODO: delete post logic
 
         $postRow = $this->postRepo->fetchPostBySlug($slug);
         if (!$postRow) {
@@ -359,6 +360,7 @@ class PostController
         $altText = trim($body['alt_text'] ?? '');
         $tagSlugs = $body['tag_slugs'] ?? [];
 
+        // Validation
 
         $thumbnailFileData = null;
         if (isset($files['thumbnail_image'])) {
@@ -370,7 +372,7 @@ class PostController
             }
         }
 
-        // Validation
+        $additionalImages = $this->validateAdditionalImages($files, $errors);
 
         if ($slug === '') {
             $errors[] = 'Post slug is required.';
@@ -396,8 +398,55 @@ class PostController
             text: $text,
             altText: $altText,
             tagSlugs: $tagSlugs,
-            thumbnailFileData: $thumbnailFileData
+            thumbnailFileData: $thumbnailFileData,
+            additionalImages: $additionalImages
         );
+    }
+
+    /**
+     * Validate additional images
+     *
+     * @param array{
+     *     additional_images: array{
+     *         name: string[],
+     *         type: string[],
+     *         tmp_name: string[],
+     *         error: int[],
+     *         size: int[]
+     *     }
+     * } $files
+     * @param list<string> $errors
+     * @return list<array{
+     *     name: string,
+     *     type: string,
+     *     tmp_name: string,
+     *     error: int,
+     *     size: int
+     * }>
+     */
+    private function validateAdditionalImages(array $files, array &$errors): array
+    {
+        $additionalImages = [];
+
+        if (isset($files['additional_images']['name'][0])) {
+            foreach ($files['additional_images']['name'] as $index => $name) {
+                $fileError = $files['additional_images']['error'][$index];
+
+                if ($fileError === UPLOAD_ERR_OK) {
+                    $additionalImages[] = [
+                        'name' => $files['additional_images']['name'][$index],
+                        'type' => $files['additional_images']['type'][$index],
+                        'tmp_name' => $files['additional_images']['tmp_name'][$index],
+                        'error' => $files['additional_images']['error'][$index],
+                        'size' => $files['additional_images']['size'][$index],
+                    ];
+                } elseif ($fileError !== UPLOAD_ERR_NO_FILE) {
+                    $errors[] = 'File upload failed with error code: ' . $fileError;
+                }
+            }
+        }
+
+        return $additionalImages;
     }
 
     /**
@@ -412,6 +461,12 @@ class PostController
         $tagRows = $this->postRepo->fetchTagsByPostIds([$postId]);
         $tagMap = $this->groupTagsByPostId($tagRows);
         $tagsForThisPost = $tagMap[$postId] ?? [];
+        try {
+            $createdAt = new DateTimeImmutable($postRow['created_at'], new DateTimeZone('Asia/Tokyo'));
+        } catch (DateMalformedStringException $e) {
+            $_SESSION['errors'] = ["Failed to parse date for post ID {$postRow['post_id']}: " . $e->getMessage()];
+            error_log("Failed to parse date for post ID {$postRow['post_id']}: " . $e->getMessage());
+        }
 
         return new Post(
             Uuid::fromString($postRow['post_id']),
@@ -422,7 +477,8 @@ class PostController
             $postRow['text'],
             $postRow['image_path'],
             $tagsForThisPost,
-            new DateTimeImmutable($postRow['created_at'])
+            $createdAt,
+            $postRow['images']
         );
     }
 }

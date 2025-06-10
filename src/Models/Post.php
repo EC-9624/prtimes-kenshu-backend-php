@@ -5,6 +5,8 @@ namespace App\Models;
 use DateTimeImmutable;
 use Ramsey\Uuid\UuidInterface;
 use Ramsey\Uuid\UUID;
+use DateMalformedStringException;
+use DateTimeZone;
 
 class Post
 {
@@ -17,6 +19,7 @@ class Post
     public ?string $thumbnail_image_path;
     public array $tags_json;
     public DateTimeImmutable $created_at;
+    public ?array $additionalImages;
 
     public function __construct(
         UuidInterface $post_id,
@@ -27,7 +30,8 @@ class Post
         string $text,
         ?string $thumbnail_image_path,
         array $tags_json,
-        DateTimeImmutable $created_at
+        DateTimeImmutable $created_at,
+        ?array $additionalImages
     ) {
         $this->post_id = $post_id;
         $this->user_id = $user_id;
@@ -38,6 +42,7 @@ class Post
         $this->thumbnail_image_path = $thumbnail_image_path;
         $this->tags_json = $tags_json;
         $this->created_at = $created_at;
+        $this->additionalImages = $additionalImages;
     }
 
     public function getPostId(): UuidInterface
@@ -87,6 +92,11 @@ class Post
         return $this->created_at;
     }
 
+    public function getAdditionalImages(): array
+    {
+        return $this->additionalImages;
+    }
+
 
     /**
      * Creates a Post instance for list view (without full text content).
@@ -107,6 +117,13 @@ class Post
      */
     public static function fromListViewData(array $data): self
     {
+        try {
+            $createdAt = new DateTimeImmutable($data['created_at'], new DateTimeZone('Asia/Tokyo'));
+        } catch (DateMalformedStringException $e) {
+            $_SESSION['errors'] = ["Failed to parse date for post ID {$data['post_id']}: " . $e->getMessage()];
+            error_log("Failed to parse date for post ID {$data['post_id']}: " . $e->getMessage());
+        }
+
         return new self(
             Uuid::fromString($data['post_id']),
             Uuid::fromString($data['author_id']),
@@ -116,7 +133,8 @@ class Post
             '', // Text is not needed in list view
             $data['image_path'],
             json_decode($data['tags_json'], true),
-            new DateTimeImmutable($data['created_at'])
+            $createdAt,
+            null
         );
     }
 }

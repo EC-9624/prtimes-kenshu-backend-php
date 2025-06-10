@@ -68,6 +68,19 @@
                 class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
         </div>
 
+        <div>
+            <label for="additional_images" class="block text-sm font-medium text-gray-700 mb-1">Additional Images:</label>
+            <input
+                type="file"
+                id="additional_images"
+                name="additional_images[]"
+                multiple
+                accept="image/jpeg, image/png, image/gif, image/webp"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            <p class="text-xs text-gray-500 mt-1">You can select multiple images (JPG, PNG, GIF, WebP)</p>
+        </div>
+
+
         <?php
         $oldTagSlugs = $old['tag_slugs'] ?? [];
         function isChecked($slug, $oldTagSlugs)

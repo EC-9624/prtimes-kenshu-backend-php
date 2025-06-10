@@ -11,6 +11,7 @@ class CreatePostDTO
         public string $text,
         public ?array $thumbnailFileData = null,
         public ?string $altText = null,
-        public ?array $tagSlugs = null
+        public ?array $tagSlugs = null,
+        public ?array $additionalImages = []
     ) {}
 }
